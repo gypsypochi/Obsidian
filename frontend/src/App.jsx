@@ -3,6 +3,7 @@ import { Routes, Route, Navigate } from "react-router-dom";
 
 import Materiales from "./pages/materiales.jsx";
 import Proveedores from "./pages/proveedores.jsx";
+import Productos from "./pages/productos.jsx";
 import Nav from "./components/nav.jsx";
 
 export default function App() {
@@ -14,6 +15,7 @@ export default function App() {
         <Route path="/" element={<Navigate to="/materiales" replace />} />
         <Route path="/materiales" element={<Materiales />} />
         <Route path="/proveedores" element={<Proveedores />} />
+        <Route path="/productos" element={<Productos />} />
         <Route path="*" element={<p>404 – Página no encontrada</p>} />
       </Routes>
     </>

@@ -79,3 +79,43 @@ export async function deleteProveedor(id) {
   if (!res.ok) throw new Error(data?.error || "Error al eliminar proveedor");
   return data;
 }
+
+export async function getProductos() {
+  const res = await fetch(`${API_URL}/productos`);
+  if (!res.ok) throw new Error("Error al cargar productos");
+  return res.json();
+}
+
+export async function createProducto(producto) {
+  const res = await fetch(`${API_URL}/productos`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(producto),
+  });
+
+  const data = await res.json();
+  if (!res.ok) throw new Error(data?.error || "Error al crear producto");
+  return data;
+}
+
+export async function updateProducto(id, updates) {
+  const res = await fetch(`${API_URL}/productos/${id}`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(updates),
+  });
+
+  const data = await res.json();
+  if (!res.ok) throw new Error(data?.error || "Error al actualizar producto");
+  return data;
+}
+
+export async function deleteProducto(id) {
+  const res = await fetch(`${API_URL}/productos/${id}`, {
+    method: "DELETE",
+  });
+
+  const data = await res.json();
+  if (!res.ok) throw new Error(data?.error || "Error al eliminar producto");
+  return data;
+}
