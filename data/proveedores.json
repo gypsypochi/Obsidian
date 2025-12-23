@@ -1,0 +1,18 @@
+[
+  {
+    "id": "prov-1766526211921",
+    "nombre": "Papelera san martin",
+    "contacto": "Juan Perez",
+    "telefono": "112345678",
+    "email": "ventas@papelerasanmartin.com",
+    "notas": "Entrega martes y viernes"
+  },
+  {
+    "id": "prov-1766526266439",
+    "nombre": "Vinilos del Sur",
+    "contacto": "Maria",
+    "telefono": "1122334455",
+    "email": "contacto@vinilosdelsur.com",
+    "notas": "Especialistas en vinilo mate y holográfico"
+  }
+]

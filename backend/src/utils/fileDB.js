@@ -1,15 +1,37 @@
 const fs = require("fs");
 const path = require("path");
 
-const dataPath = path.join(__dirname, "../../../data/materiales.json");
+const materialesPath = path.join(__dirname, "../../../data/materiales.json");
+const proveedoresPath = path.join(__dirname, "../../../data/proveedores.json");
 
-function readMaterials() {
-  const raw = fs.readFileSync(dataPath, "utf-8");
+function readJson(filePath) {
+  const raw = fs.readFileSync(filePath, "utf-8");
   return JSON.parse(raw);
 }
 
-function writeMaterials(materials) {
-  fs.writeFileSync(dataPath, JSON.stringify(materials, null, 2));
+function writeJson(filePath, data) {
+  fs.writeFileSync(filePath, JSON.stringify(data, null, 2));
 }
 
-module.exports = { readMaterials, writeMaterials };
+function readMaterials() {
+  return readJson(materialesPath);
+}
+
+function writeMaterials(materials) {
+  writeJson(materialesPath, materials);
+}
+
+function readProveedores() {
+  return readJson(proveedoresPath);
+}
+
+function writeProveedores(proveedores) {
+  writeJson(proveedoresPath, proveedores);
+}
+
+module.exports = {
+  readMaterials,
+  writeMaterials,
+  readProveedores,
+  writeProveedores,
+};
