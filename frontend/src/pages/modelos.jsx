@@ -10,8 +10,6 @@ import {
   uploadPlancha,
 } from "../api";
 
-const BACKEND_URL = "http://localhost:3001";
-
 export default function Modelos() {
   const [modelos, setModelos] = useState([]);
   const [productos, setProductos] = useState([]);
@@ -43,6 +41,7 @@ export default function Modelos() {
   });
 
   // Filtros
+  const [fProductoBase, setFProductoBase] = useState("");
   const [fCategoria, setFCategoria] = useState("");
   const [fSubcategoria, setFSubcategoria] = useState("");
   const [fTexto, setFTexto] = useState("");
@@ -73,7 +72,7 @@ export default function Modelos() {
     }));
   }
 
-  // SUBIDA DE ARCHIVOS (ALTA)
+  // ------------ SUBIDA DE ARCHIVOS (ALTA) ------------
   async function handleImagenFileChange(e) {
     const file = e.target.files[0];
     if (!file) return;
@@ -184,7 +183,7 @@ export default function Modelos() {
     }));
   }
 
-  // SUBIDA DE ARCHIVOS (EDICIÓN)
+  // ------------ SUBIDA DE ARCHIVOS (EDICIÓN) ------------
   async function handleImagenFileChangeEdit(e) {
     const file = e.target.files[0];
     if (!file) return;
@@ -259,13 +258,43 @@ export default function Modelos() {
     }
   }
 
+  // 👉 NUEVO: limpiar todos los filtros
+  function handleClearFilters() {
+    setFProductoBase("");
+    setFCategoria("");
+    setFSubcategoria("");
+    setFTexto("");
+  }
+
+  // Map de productos
   const mapaProductos = useMemo(
     () => new Map(productos.map((p) => [p.id, p])),
     [productos]
   );
 
+  // Opciones únicas para datalist de filtros
+  const opcionesCategoria = useMemo(
+    () =>
+      Array.from(
+        new Set(modelos.map((m) => m.categoria).filter(Boolean))
+      ).sort(),
+    [modelos]
+  );
+
+  const opcionesSubcategoria = useMemo(
+    () =>
+      Array.from(
+        new Set(modelos.map((m) => m.subcategoria).filter(Boolean))
+      ).sort(),
+    [modelos]
+  );
+
   const modelosFiltrados = useMemo(() => {
     return modelos.filter((m) => {
+      // Filtro por producto base
+      if (fProductoBase && m.productoId !== fProductoBase) return false;
+
+      // Filtro por categoría
       if (
         fCategoria.trim() &&
         !String(m.categoria || "")
@@ -275,6 +304,7 @@ export default function Modelos() {
         return false;
       }
 
+      // Filtro por subcategoría
       if (
         fSubcategoria.trim() &&
         !String(m.subcategoria || "")
@@ -284,6 +314,7 @@ export default function Modelos() {
         return false;
       }
 
+      // Búsqueda por texto
       if (fTexto.trim()) {
         const term = fTexto.trim().toLowerCase();
         const textoBusqueda = [
@@ -299,7 +330,7 @@ export default function Modelos() {
 
       return true;
     });
-  }, [modelos, fCategoria, fSubcategoria, fTexto]);
+  }, [modelos, fProductoBase, fCategoria, fSubcategoria, fTexto]);
 
   return (
     <div>
@@ -423,12 +454,33 @@ export default function Modelos() {
 
       <div style={{ marginBottom: 12 }}>
         <label style={{ marginRight: 8 }}>
+          Producto base:
+          <select
+            value={fProductoBase}
+            onChange={(e) => setFProductoBase(e.target.value)}
+          >
+            <option value="">Todos</option>
+            {productos.map((p) => (
+              <option key={p.id} value={p.id}>
+                {p.nombre}
+              </option>
+            ))}
+          </select>
+        </label>
+
+        <label style={{ marginRight: 8 }}>
           Categoría:
           <input
             value={fCategoria}
             onChange={(e) => setFCategoria(e.target.value)}
             placeholder="Anime / Películas / Memes..."
+            list="categoriasOptions"
           />
+          <datalist id="categoriasOptions">
+            {opcionesCategoria.map((cat) => (
+              <option key={cat} value={cat} />
+            ))}
+          </datalist>
         </label>
 
         <label style={{ marginRight: 8 }}>
@@ -437,7 +489,13 @@ export default function Modelos() {
             value={fSubcategoria}
             onChange={(e) => setFSubcategoria(e.target.value)}
             placeholder="Harry Potter / Flork..."
+            list="subcategoriasOptions"
           />
+          <datalist id="subcategoriasOptions">
+            {opcionesSubcategoria.map((sub) => (
+              <option key={sub} value={sub} />
+            ))}
+          </datalist>
         </label>
 
         <label>
@@ -448,6 +506,15 @@ export default function Modelos() {
             placeholder="Nombre, código, notas..."
           />
         </label>
+
+        {/* 👉 NUEVO: botón para limpiar todos los filtros */}
+        <button
+          type="button"
+          onClick={handleClearFilters}
+          style={{ marginLeft: 8 }}
+        >
+          Limpiar filtros
+        </button>
       </div>
 
       <div
@@ -461,31 +528,22 @@ export default function Modelos() {
           const prod = mapaProductos.get(m.productoId);
           const isEditing = editId === m.id;
 
-          // Normalizar URLs de imagen y PDF
-          const imagenUrl = m.imagenRef
-            ? m.imagenRef.startsWith("http")
-              ? m.imagenRef
-              : `${BACKEND_URL}${m.imagenRef}`
-            : "";
-
-          const pdfUrl = m.archivoPlancha
-            ? m.archivoPlancha.startsWith("http")
-              ? m.archivoPlancha
-              : `${BACKEND_URL}${m.archivoPlancha}`
-            : "";
-
           if (isEditing) {
             return (
               <div
                 key={m.id}
                 style={{
-                  border: "1px solid #e5e7eb",
+                  border: "1px solid #4b5563",
                   padding: 12,
                   width: 280,
-                  background: "#f9fafb",
+                  background: "#111827",
+                  color: "#f9fafb",
+                  borderRadius: 4,
                 }}
               >
-                <h3>Editar modelo</h3>
+                <h3 style={{ marginBottom: 8, color: "#f9fafb" }}>
+                  Editar modelo
+                </h3>
 
                 <div>
                   <label>Producto base</label>
@@ -601,53 +659,81 @@ export default function Modelos() {
             <div
               key={m.id}
               style={{
-                border: "1px solid #e5e7eb",
+                border: "1px solid #4b5563",
                 padding: 12,
                 width: 280,
-                background: "white",
+                background: "#111827",
+                color: "#f9fafb",
+                borderRadius: 4,
+                boxShadow: "0 1px 2px rgba(0,0,0,0.3)",
               }}
             >
-              {imagenUrl ? (
-                <img
-                  src={imagenUrl}
-                  alt={m.nombreModelo}
-                  style={{
-                    width: "100%",
-                    height: 150,
-                    objectFit: "cover",
-                    marginBottom: 8,
-                  }}
-                />
+              {/* Imagen preview clickeable */}
+              {m.imagenRef ? (
+                <a
+                  href={m.imagenRef}
+                  target="_blank"
+                  rel="noreferrer"
+                  title="Ver imagen en grande"
+                >
+                  <img
+                    src={m.imagenRef}
+                    alt={m.nombreModelo}
+                    style={{
+                      width: "100%",
+                      height: 150,
+                      objectFit: "cover",
+                      marginBottom: 8,
+                      borderRadius: 4,
+                    }}
+                  />
+                </a>
               ) : (
                 <div
                   style={{
                     width: "100%",
                     height: 150,
-                    background: "#f3f4f6",
+                    background: "#4b5563",
                     marginBottom: 8,
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "center",
                     fontSize: 12,
-                    color: "#6b7280",
+                    color: "#e5e7eb",
+                    borderRadius: 4,
                   }}
                 >
                   Sin imagen
                 </div>
               )}
 
-              <strong>{m.nombreModelo}</strong>
-              <div style={{ fontSize: 13, color: "#374151" }}>
+              <strong
+                style={{
+                  display: "block",
+                  fontSize: 14,
+                  marginBottom: 2,
+                  color: "#f9fafb",
+                }}
+              >
+                {m.nombreModelo}
+              </strong>
+              <div style={{ fontSize: 13, color: "#e5e7eb" }}>
                 {m.categoria || "-"}
                 {m.subcategoria ? ` – ${m.subcategoria}` : ""}
               </div>
 
-              <div style={{ fontSize: 12, color: "#4b5563", marginTop: 4 }}>
+              <div
+                style={{
+                  fontSize: 12,
+                  color: "#d1d5db",
+                  marginTop: 4,
+                }}
+              >
                 Producto base: {prod ? prod.nombre : m.productoId}
               </div>
 
               {m.codigoInterno && (
-                <div style={{ fontSize: 12, color: "#6b7280" }}>
+                <div style={{ fontSize: 12, color: "#9ca3af" }}>
                   Código: {m.codigoInterno}
                 </div>
               )}
@@ -656,7 +742,7 @@ export default function Modelos() {
                 <p
                   style={{
                     fontSize: 12,
-                    color: "#4b5563",
+                    color: "#e5e7eb",
                     marginTop: 4,
                     whiteSpace: "pre-wrap",
                   }}
@@ -665,13 +751,13 @@ export default function Modelos() {
                 </p>
               )}
 
-              {pdfUrl && (
+              {m.archivoPlancha && (
                 <div style={{ marginTop: 6 }}>
                   <a
-                    href={pdfUrl}
+                    href={m.archivoPlancha}
                     target="_blank"
                     rel="noreferrer"
-                    style={{ fontSize: 12 }}
+                    style={{ fontSize: 12, color: "#93c5fd" }}
                   >
                     Ver / imprimir plancha (PDF)
                   </a>
