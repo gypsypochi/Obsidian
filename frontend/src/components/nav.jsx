@@ -80,6 +80,11 @@ export default function Nav() {
       <NavLink to="/pedidos" style={linkStyle}>
         {pedidosLabel}
       </NavLink>
+
+      <NavLink to="/modelos" style={linkStyle}>
+         Modelos
+      </NavLink>
+
     </nav>
   );
 }

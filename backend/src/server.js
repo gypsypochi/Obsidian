@@ -1,5 +1,6 @@
 const express = require("express");
 const cors = require("cors");
+const path = require("path");
 
 const materialesRoutes = require("./routes/materiales");
 const proveedoresRoutes = require("./routes/proveedores");
@@ -7,15 +8,26 @@ const productosRoutes = require("./routes/productos");
 const recetasRoutes = require("./routes/recetas");
 const produccionesRoutes = require("./routes/producciones");
 const historialRoutes = require("./routes/historial");
-// NUEVO
+const ventasRoutes = require("./routes/ventas");
 const pedidosRoutes = require("./routes/pedidos");
-const ventasRoutes = require("./routes/ventas"); // asumo que ya existe
+
+// ⭐ NUEVO: modelos
+const modelosRoutes = require("./routes/modelos");
+
+// NUEVO: rutas de upload
+const uploadRoutes = require("./routes/upload");
 
 const app = express();
 const PORT = process.env.PORT || 3001;
 
 app.use(cors());
 app.use(express.json());
+
+// Servir archivos estáticos subidos (imagenes / pdf)
+app.use(
+  "/uploads",
+  express.static(path.join(__dirname, "../uploads"))
+);
 
 // Health check
 app.get("/health", (req, res) => {
@@ -29,9 +41,14 @@ app.use("/productos", productosRoutes);
 app.use("/recetas", recetasRoutes);
 app.use("/producciones", produccionesRoutes);
 app.use("/historial", historialRoutes);
-// NUEVO
-app.use("/pedidos", pedidosRoutes);
 app.use("/ventas", ventasRoutes);
+app.use("/pedidos", pedidosRoutes);
+
+// ⭐ NUEVO: modelos
+app.use("/modelos", modelosRoutes);
+
+// NUEVO: endpoint para subir archivos
+app.use("/upload", uploadRoutes);
 
 app.listen(PORT, () => {
   console.log(`✅ Obsidian API running on http://localhost:${PORT}`);

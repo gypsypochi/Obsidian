@@ -12,6 +12,8 @@ import Historial from "./pages/historial.jsx";
 // NUEVO
 import Pedidos from "./pages/pedidos.jsx";
 import Ventas from "./pages/ventas.jsx"; // asumo que ya existe
+import Modelos from "./pages/modelos.jsx";
+
 
 export default function App() {
   return (
@@ -29,6 +31,8 @@ export default function App() {
         <Route path="/ventas" element={<Ventas />} />
         {/* NUEVO */}
         <Route path="/pedidos" element={<Pedidos />} />
+        <Route path="/modelos" element={<Modelos />} />
+
         <Route path="*" element={<p>404 – Página no encontrada</p>} />
       </Routes>
     </>

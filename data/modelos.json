@@ -1,0 +1,14 @@
+[
+  {
+    "id": "mod-1766781838703",
+    "productoId": "prod-1766762332322",
+    "categoria": "Anime",
+    "subcategoria": "Varios Anime",
+    "nombreModelo": "Anime 1",
+    "codigoInterno": "",
+    "imagenRef": "http://localhost:3001/uploads/imagenes/Captura de pantalla 2025-12-26 163905-1766781826486.png",
+    "archivoPlancha": "http://localhost:3001/uploads/planchas/Anime 1-1766781837519.pdf",
+    "notas": "",
+    "fechaCreacion": "2025-12-26T20:43:58.703Z"
+  }
+]

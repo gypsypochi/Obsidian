@@ -261,3 +261,98 @@ export async function updatePedido(id, updates) {
   return data;
 }
 
+// --- MODELOS / DISEÑOS (NUEVO) ---
+export async function getModelos() {
+  const res = await fetch(`${API_URL}/modelos`);
+  if (!res.ok) throw new Error("Error al cargar modelos");
+  return res.json();
+}
+
+export async function createModelo(modelo) {
+  const res = await fetch(`${API_URL}/modelos`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(modelo),
+  });
+
+  const data = await res.json().catch(() => null);
+
+  if (!res.ok) {
+    if (data && data.error) throw new Error(data.error);
+    throw new Error("Error al crear modelo");
+  }
+
+  return data;
+}
+
+export async function updateModelo(id, updates) {
+  const res = await fetch(`${API_URL}/modelos/${id}`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(updates),
+  });
+
+  const data = await res.json().catch(() => null);
+
+  if (!res.ok) {
+    if (data && data.error) throw new Error(data.error);
+    throw new Error("Error al actualizar modelo");
+  }
+
+  return data;
+}
+
+export async function deleteModelo(id) {
+  const res = await fetch(`${API_URL}/modelos/${id}`, {
+    method: "DELETE",
+  });
+
+  const data = await res.json().catch(() => null);
+
+  if (!res.ok) {
+    if (data && data.error) throw new Error(data.error);
+    throw new Error("Error al eliminar modelo");
+  }
+
+  return data;
+}
+
+// ...
+
+export async function uploadImagen(file) {
+  const formData = new FormData();
+  formData.append("file", file);
+
+  const res = await fetch(`${API_URL}/upload/imagen`, {
+    method: "POST",
+    body: formData,
+  });
+
+  const data = await res.json().catch(() => null);
+
+  if (!res.ok) {
+    if (data && data.error) throw new Error(data.error);
+    throw new Error("Error subiendo imagen");
+  }
+
+  return data; // { url }
+}
+
+export async function uploadPlancha(file) {
+  const formData = new FormData();
+  formData.append("file", file);
+
+  const res = await fetch(`${API_URL}/upload/plancha`, {
+    method: "POST",
+    body: formData,
+  });
+
+  const data = await res.json().catch(() => null);
+
+  if (!res.ok) {
+    if (data && data.error) throw new Error(data.error);
+    throw new Error("Error subiendo plancha");
+  }
+
+  return data; // { url }
+}
