@@ -8,11 +8,14 @@ import {
   getProductos,
   uploadImagen,
   uploadPlancha,
+  getProducciones,
 } from "../api";
 
 export default function Modelos() {
   const [modelos, setModelos] = useState([]);
   const [productos, setProductos] = useState([]);
+  const [producciones, setProducciones] = useState([]); // 🔹 producciones para stats
+
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [mensaje, setMensaje] = useState("");
@@ -46,13 +49,19 @@ export default function Modelos() {
   const [fSubcategoria, setFSubcategoria] = useState("");
   const [fTexto, setFTexto] = useState("");
 
+  // ---------- CARGA DE DATOS ----------
   async function load() {
     try {
       setError("");
       setLoading(true);
-      const [mods, prods] = await Promise.all([getModelos(), getProductos()]);
+      const [mods, prods, prodsHist] = await Promise.all([
+        getModelos(),
+        getProductos(),
+        getProducciones(), // 🔹 ahora también traemos producciones
+      ]);
       setModelos(mods);
       setProductos(prods);
+      setProducciones(prodsHist);
     } catch (e) {
       setError(e.message || "Error cargando modelos");
     } finally {
@@ -64,6 +73,7 @@ export default function Modelos() {
     load();
   }, []);
 
+  // ---------- FORMULARIO ALTA ----------
   function onFormChange(e) {
     const { name, value } = e.target;
     setForm((prev) => ({
@@ -72,7 +82,7 @@ export default function Modelos() {
     }));
   }
 
-  // ------------ SUBIDA DE ARCHIVOS (ALTA) ------------
+  // SUBIDA DE ARCHIVOS (ALTA)
   async function handleImagenFileChange(e) {
     const file = e.target.files[0];
     if (!file) return;
@@ -147,6 +157,7 @@ export default function Modelos() {
     }
   }
 
+  // ---------- EDICIÓN ----------
   function startEdit(m) {
     setEditId(m.id);
     setEditForm({
@@ -183,7 +194,7 @@ export default function Modelos() {
     }));
   }
 
-  // ------------ SUBIDA DE ARCHIVOS (EDICIÓN) ------------
+  // SUBIDA DE ARCHIVOS (EDICIÓN)
   async function handleImagenFileChangeEdit(e) {
     const file = e.target.files[0];
     if (!file) return;
@@ -243,6 +254,7 @@ export default function Modelos() {
     }
   }
 
+  // ---------- ELIMINAR ----------
   async function onDelete(id) {
     const ok = window.confirm("¿Eliminar este modelo/diseño?");
     if (!ok) return;
@@ -258,7 +270,7 @@ export default function Modelos() {
     }
   }
 
-  // 👉 NUEVO: limpiar todos los filtros
+  // ---------- LIMPIAR FILTROS ----------
   function handleClearFilters() {
     setFProductoBase("");
     setFCategoria("");
@@ -266,13 +278,12 @@ export default function Modelos() {
     setFTexto("");
   }
 
-  // Map de productos
+  // ---------- MAPAS Y STATS ----------
   const mapaProductos = useMemo(
     () => new Map(productos.map((p) => [p.id, p])),
     [productos]
   );
 
-  // Opciones únicas para datalist de filtros
   const opcionesCategoria = useMemo(
     () =>
       Array.from(
@@ -289,6 +300,33 @@ export default function Modelos() {
     [modelos]
   );
 
+  // 🔹 NUEVO: stats por modelo basadas en producciones
+  const mapaStatsModelos = useMemo(() => {
+    const map = new Map();
+
+    producciones.forEach((p) => {
+      if (!p.modeloId) return;
+
+      const actual = map.get(p.modeloId) || { veces: 0, unidades: 0 };
+      actual.veces += 1;
+
+      let inc = 0;
+      if (typeof p.incrementoStock === "number") {
+        inc = p.incrementoStock;
+      } else if (typeof p.unidadesBuenas === "number") {
+        inc = p.unidadesBuenas;
+      } else if (typeof p.cantidad === "number") {
+        inc = p.cantidad;
+      }
+      actual.unidades += inc;
+
+      map.set(p.modeloId, actual);
+    });
+
+    return map;
+  }, [producciones]);
+
+  // ---------- FILTROS ----------
   const modelosFiltrados = useMemo(() => {
     return modelos.filter((m) => {
       // Filtro por producto base
@@ -332,6 +370,7 @@ export default function Modelos() {
     });
   }, [modelos, fProductoBase, fCategoria, fSubcategoria, fTexto]);
 
+  // ---------- RENDER ----------
   return (
     <div>
       <h1>Modelos / Diseños</h1>
@@ -507,7 +546,6 @@ export default function Modelos() {
           />
         </label>
 
-        {/* 👉 NUEVO: botón para limpiar todos los filtros */}
         <button
           type="button"
           onClick={handleClearFilters}
@@ -655,6 +693,8 @@ export default function Modelos() {
             );
           }
 
+          const stats = mapaStatsModelos.get(m.id);
+
           return (
             <div
               key={m.id}
@@ -717,6 +757,7 @@ export default function Modelos() {
               >
                 {m.nombreModelo}
               </strong>
+
               <div style={{ fontSize: 13, color: "#e5e7eb" }}>
                 {m.categoria || "-"}
                 {m.subcategoria ? ` – ${m.subcategoria}` : ""}
@@ -731,6 +772,20 @@ export default function Modelos() {
               >
                 Producto base: {prod ? prod.nombre : m.productoId}
               </div>
+
+              {/* 🔹 Stats de producción por modelo */}
+              {stats && (
+                <div
+                  style={{
+                    fontSize: 12,
+                    color: "#bfdbfe",
+                    marginTop: 4,
+                  }}
+                >
+                  Producciones: {stats.veces} · Unidades totales:{" "}
+                  {stats.unidades}
+                </div>
+              )}
 
               {m.codigoInterno && (
                 <div style={{ fontSize: 12, color: "#9ca3af" }}>

@@ -1,11 +1,6 @@
 // frontend/src/pages/produccion.jsx
-import { useEffect, useState, useMemo } from "react";
-import {
-  getProductos,
-  getRecetas,
-  createProduccion,
-  getModelos, // 👈 IMPORTANTE
-} from "../api";
+import { useEffect, useState } from "react";
+import { getProductos, getRecetas, getModelos, createProduccion } from "../api";
 
 export default function Produccion() {
   const [productos, setProductos] = useState([]);
@@ -17,12 +12,10 @@ export default function Produccion() {
   const [mensaje, setMensaje] = useState("");
 
   const [productoId, setProductoId] = useState("");
+  const [modeloId, setModeloId] = useState(""); // 🔹 NUEVO
   const [cantidad, setCantidad] = useState(1); // unidades o lotes
   const [unidadesBuenas, setUnidadesBuenas] = useState(""); // solo para lote
   const [tipoProduccion, setTipoProduccion] = useState("unidad");
-
-  // NUEVO: modelo/diseño asociado
-  const [modeloId, setModeloId] = useState("");
 
   async function loadDatos() {
     try {
@@ -47,31 +40,26 @@ export default function Produccion() {
     loadDatos();
   }, []);
 
-  // Cada vez que cambia el producto seleccionado:
-  // - determinamos su tipoProduccion
-  // - reseteamos el modelo seleccionado
+  // Cada vez que cambia el producto seleccionado, determinamos su tipoProduccion
   useEffect(() => {
     if (!productoId) {
       setTipoProduccion("unidad");
       setModeloId("");
       return;
     }
-
     const recetaProd = recetas.find((r) => r.productoId === productoId);
     if (recetaProd && recetaProd.tipoProduccion) {
       setTipoProduccion(recetaProd.tipoProduccion);
     } else {
       setTipoProduccion("unidad");
     }
-
+    // reset modelo al cambiar producto
     setModeloId("");
   }, [productoId, recetas]);
 
-  // Modelos disponibles para el producto seleccionado
-  const modelosDelProducto = useMemo(() => {
-    if (!productoId) return [];
-    return modelos.filter((m) => m.productoId === productoId);
-  }, [modelos, productoId]);
+  const modelosDelProducto = modelos.filter(
+    (m) => m.productoId === productoId
+  );
 
   async function onSubmit(e) {
     e.preventDefault();
@@ -94,6 +82,10 @@ export default function Produccion() {
       cantidad: cantNum,
     };
 
+    if (modeloId) {
+      payload.modeloId = modeloId; // 🔹 se manda al backend
+    }
+
     if (tipoProduccion === "lote") {
       const ubNum = Number(unidadesBuenas);
       if (Number.isNaN(ubNum) || ubNum <= 0) {
@@ -105,36 +97,28 @@ export default function Produccion() {
       payload.unidadesBuenas = ubNum;
     }
 
-    // ✅ Si hay modelo seleccionado, lo enviamos
-    if (modeloId) {
-      payload.modeloId = modeloId;
-    }
-
     try {
       const resp = await createProduccion(payload);
 
       const nombreProd =
         productos.find((p) => p.id === productoId)?.nombre || "Producto";
 
-      const modeloAsociado = resp.produccion.modeloId
-        ? modelos.find((m) => m.id === resp.produccion.modeloId)
-        : null;
-
-      const textoModelo = modeloAsociado
-        ? ` Modelo: "${modeloAsociado.nombreModelo}".`
+      const nombreModelo = modeloId
+        ? modelos.find((m) => m.id === modeloId)?.nombreModelo || ""
         : "";
+
+      const etiquetaModelo = nombreModelo ? ` (modelo: ${nombreModelo})` : "";
 
       if (resp.produccion.tipoProduccion === "lote") {
         setMensaje(
-          `Producción registrada: ${resp.produccion.cantidad} lote(s)/plancha(s) de "${nombreProd}", sumando ${resp.produccion.unidadesBuenas} unidades buenas.${textoModelo} Stock actual del producto: ${resp.productoActualizado.stock}.`
+          `Producción registrada: ${resp.produccion.cantidad} lote(s)/plancha(s) de "${nombreProd}"${etiquetaModelo}, sumando ${resp.produccion.unidadesBuenas} unidades buenas. Stock actual del producto: ${resp.productoActualizado.stock}.`
         );
       } else {
         setMensaje(
-          `Producción registrada: ${resp.produccion.cantidad} unidad(es) de "${nombreProd}".${textoModelo} Stock actual del producto: ${resp.productoActualizado.stock}.`
+          `Producción registrada: ${resp.produccion.cantidad} unidad(es) de "${nombreProd}"${etiquetaModelo}. Stock actual del producto: ${resp.productoActualizado.stock}.`
         );
       }
 
-      // Refrescamos datos para ver el nuevo stock en la tabla
       await loadDatos();
       setCantidad(1);
       setUnidadesBuenas("");
@@ -147,11 +131,6 @@ export default function Produccion() {
   return (
     <div>
       <h1>Producción</h1>
-
-      {/* 👇 Línea de debug para que veas que se cargan modelos */}
-      <p style={{ fontSize: 12, color: "#6b7280" }}>
-        Modelos totales cargados: {modelos.length}
-      </p>
 
       {loading && <p>Cargando...</p>}
       {error && <p style={{ color: "red" }}>{error}</p>}
@@ -176,45 +155,26 @@ export default function Produccion() {
           </select>
         </div>
 
-        {/* 🔹 Ahora SIEMPRE mostramos el bloque de modelo/diseño */}
-        <div style={{ marginTop: 8, marginBottom: 8 }}>
-          <label>Modelo / diseño (opcional)</label>
-          {productoId ? (
-            modelosDelProducto.length > 0 ? (
-              <>
-                <select
-                  value={modeloId}
-                  onChange={(e) => setModeloId(e.target.value)}
-                >
-                  <option value="">-- sin modelo específico --</option>
-                  {modelosDelProducto.map((m) => (
-                    <option key={m.id} value={m.id}>
-                      {m.nombreModelo}{" "}
-                      {m.categoria
-                        ? `(${m.categoria}${
-                            m.subcategoria ? " - " + m.subcategoria : ""
-                          })`
-                        : ""}
-                    </option>
-                  ))}
-                </select>
-                <p style={{ fontSize: 12 }}>
-                  Esto te permite registrar qué plancha/tapa exacta produjiste
-                  (anime, HP, memes, etc.).
-                </p>
-              </>
-            ) : (
-              <p style={{ fontSize: 12, color: "#6b7280" }}>
-                No hay modelos asociados a este producto. Podés cargarlos desde
-                la sección <b>Modelos</b>.
-              </p>
-            )
-          ) : (
-            <p style={{ fontSize: 12, color: "#6b7280" }}>
-              Elegí primero un producto para ver sus modelos disponibles.
+        {productoId && (
+          <div>
+            <label>Modelo / diseño (opcional)</label>
+            <select
+              value={modeloId}
+              onChange={(e) => setModeloId(e.target.value)}
+            >
+              <option value="">-- sin modelo específico --</option>
+              {modelosDelProducto.map((m) => (
+                <option key={m.id} value={m.id}>
+                  {m.nombreModelo}{" "}
+                  {m.categoria ? `(${m.categoria}${m.subcategoria ? " - " + m.subcategoria : ""})` : ""}
+                </option>
+              ))}
+            </select>
+            <p style={{ fontSize: 12 }}>
+              Esto te permite registrar qué plancha / tapa se produjo.
             </p>
-          )}
-        </div>
+          </div>
+        )}
 
         <div>
           {tipoProduccion === "lote" ? (
