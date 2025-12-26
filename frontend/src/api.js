@@ -159,3 +159,33 @@ export async function deleteReceta(id) {
   if (!res.ok) throw new Error(data?.error || "Error al eliminar receta");
   return data;
 }
+
+export async function createProduccion(produccion) {
+  const res = await fetch(`${API_URL}/producciones`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(produccion),
+  });
+
+  const text = await res.text();
+  let data = null;
+
+  // Intentamos parsear JSON si se puede
+  try {
+    data = text ? JSON.parse(text) : null;
+  } catch {
+    // si no es JSON, lo dejamos como texto
+  }
+
+  if (!res.ok) {
+    if (data && data.error) {
+      throw new Error(data.error);
+    }
+    if (text) {
+      throw new Error(text);
+    }
+    throw new Error("Error al registrar producción");
+  }
+
+  return data;
+}

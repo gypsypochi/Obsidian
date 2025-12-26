@@ -1,3 +1,4 @@
+// frontend/src/components/nav.jsx
 import { NavLink } from "react-router-dom";
 
 const linkStyle = ({ isActive }) => ({
@@ -33,6 +34,10 @@ export default function Nav() {
         Recetas
       </NavLink>
 
+      {/* NUEVO */}
+      <NavLink to="/produccion" style={linkStyle}>
+        Producción
+      </NavLink>
     </nav>
   );
 }

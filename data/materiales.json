@@ -3,21 +3,35 @@
     "id": "mat-1766518351924",
     "nombre": "vinilo mate",
     "categoria": "vinilos",
-    "stock": 15,
+    "stock": 6,
     "unidad": "planchas"
   },
   {
     "id": "mat-1766518457021",
     "nombre": "vinilo brillante",
     "categoria": "vinilos",
-    "stock": 10,
+    "stock": 1,
     "unidad": "planchas"
   },
   {
     "id": "mat-1766762361853",
     "nombre": "Vinilo Blanco",
     "categoria": "vinilos",
-    "stock": 2,
+    "stock": 0,
     "unidad": "planchas"
+  },
+  {
+    "id": "mat-1766768815323",
+    "nombre": "Hoja imantada a4",
+    "categoria": "iman",
+    "stock": 4,
+    "unidad": "hoja"
+  },
+  {
+    "id": "mat-1766768854090",
+    "nombre": "papel fotografico 230gr",
+    "categoria": "papel fotografico",
+    "stock": 99,
+    "unidad": "hoja"
   }
 ]

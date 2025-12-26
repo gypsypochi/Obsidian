@@ -22,5 +22,21 @@
     "cantidad": 1,
     "unidad": "hoja",
     "tipoProduccion": "unidad"
+  },
+  {
+    "id": "rec-1766768932079",
+    "productoId": "prod-1766768898699",
+    "materialId": "mat-1766768815323",
+    "cantidad": 1,
+    "unidad": "hoja",
+    "tipoProduccion": "lote"
+  },
+  {
+    "id": "rec-1766768944620",
+    "productoId": "prod-1766768898699",
+    "materialId": "mat-1766768854090",
+    "cantidad": 1,
+    "unidad": "hoja",
+    "tipoProduccion": "lote"
   }
 ]
