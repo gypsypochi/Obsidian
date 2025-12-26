@@ -1,0 +1,19 @@
+[
+  {
+    "id": "ped-1766774272321",
+    "cliente": "Hospital",
+    "estado": "entregado",
+    "items": [
+      {
+        "productoId": "prod-1766527364936",
+        "cantidad": 1
+      }
+    ],
+    "notas": "Cuaderno de catzilla a5",
+    "fechaCreacion": "2025-12-26T18:37:52.321Z",
+    "fechaEntrega": "2025-12-26T18:38:36.437Z",
+    "ventasIds": [
+      "venta-1766774316436-160"
+    ]
+  }
+]

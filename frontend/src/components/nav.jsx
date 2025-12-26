@@ -42,9 +42,13 @@ export default function Nav() {
         Historial
       </NavLink>
 
-      {/* NUEVO */}
       <NavLink to="/ventas" style={linkStyle}>
         Ventas
+      </NavLink>
+
+      {/* NUEVO */}
+      <NavLink to="/pedidos" style={linkStyle}>
+        Pedidos
       </NavLink>
     </nav>
   );

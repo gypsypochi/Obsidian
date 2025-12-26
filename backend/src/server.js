@@ -8,7 +8,8 @@ const recetasRoutes = require("./routes/recetas");
 const produccionesRoutes = require("./routes/producciones");
 const historialRoutes = require("./routes/historial");
 // NUEVO
-const ventasRoutes = require("./routes/ventas");
+const pedidosRoutes = require("./routes/pedidos");
+const ventasRoutes = require("./routes/ventas"); // asumo que ya existe
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -29,6 +30,7 @@ app.use("/recetas", recetasRoutes);
 app.use("/producciones", produccionesRoutes);
 app.use("/historial", historialRoutes);
 // NUEVO
+app.use("/pedidos", pedidosRoutes);
 app.use("/ventas", ventasRoutes);
 
 app.listen(PORT, () => {

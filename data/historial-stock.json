@@ -18,5 +18,16 @@
     "stockDespues": 13,
     "ventaId": "venta-1766773066668",
     "fecha": "2025-12-26T18:17:46.668Z"
+  },
+  {
+    "id": "mov-1766774316436-venta-pedido-164",
+    "productoId": "prod-1766527364936",
+    "tipoMovimiento": "venta",
+    "cantidad": -1,
+    "stockAntes": 13,
+    "stockDespues": 12,
+    "ventaId": "venta-1766774316436-160",
+    "pedidoId": "ped-1766774272321",
+    "fecha": "2025-12-26T18:38:36.436Z"
   }
 ]

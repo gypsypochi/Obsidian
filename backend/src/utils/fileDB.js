@@ -11,8 +11,9 @@ const historialStockPath = path.join(
   __dirname,
   "../../../data/historial-stock.json"
 );
-// NUEVO: ventas
+// NUEVO: rutas de archivos extra
 const ventasPath = path.join(__dirname, "../../../data/ventas.json");
+const pedidosPath = path.join(__dirname, "../../../data/pedidos.json");
 
 function readJson(filePath) {
   const raw = fs.readFileSync(filePath, "utf-8");
@@ -93,21 +94,32 @@ function writeHistorialStock(historial) {
   writeJson(historialStockPath, historial || []);
 }
 
-// --- VENTAS (NUEVO) ---
+// --- VENTAS (por si no estaba) ---
 function readVentas() {
   try {
     return readJson(ventasPath);
   } catch (err) {
-    console.error(
-      "Error leyendo ventas.json, devolviendo []:",
-      err.message
-    );
+    console.error("Error leyendo ventas.json, devolviendo []:", err.message);
     return [];
   }
 }
 
 function writeVentas(ventas) {
   writeJson(ventasPath, ventas || []);
+}
+
+// --- PEDIDOS (NUEVO) ---
+function readPedidos() {
+  try {
+    return readJson(pedidosPath);
+  } catch (err) {
+    console.error("Error leyendo pedidos.json, devolviendo []:", err.message);
+    return [];
+  }
+}
+
+function writePedidos(pedidos) {
+  writeJson(pedidosPath, pedidos || []);
 }
 
 module.exports = {
@@ -125,4 +137,6 @@ module.exports = {
   writeHistorialStock,
   readVentas,
   writeVentas,
+  readPedidos,
+  writePedidos,
 };

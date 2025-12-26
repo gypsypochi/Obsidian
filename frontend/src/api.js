@@ -221,3 +221,43 @@ export async function createVenta(venta) {
   return data;
 }
 
+export async function getPedidos() {
+  const res = await fetch(`${API_URL}/pedidos`);
+  if (!res.ok) throw new Error("Error al cargar pedidos");
+  return res.json();
+}
+
+export async function createPedido(pedido) {
+  const res = await fetch(`${API_URL}/pedidos`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(pedido),
+  });
+
+  const data = await res.json().catch(() => null);
+
+  if (!res.ok) {
+    if (data && data.error) throw new Error(data.error);
+    throw new Error("Error al crear pedido");
+  }
+
+  return data;
+}
+
+export async function updatePedido(id, updates) {
+  const res = await fetch(`${API_URL}/pedidos/${id}`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(updates),
+  });
+
+  const data = await res.json().catch(() => null);
+
+  if (!res.ok) {
+    if (data && data.error) throw new Error(data.error);
+    throw new Error("Error al actualizar pedido");
+  }
+
+  return data;
+}
+
