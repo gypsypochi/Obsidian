@@ -8,8 +8,9 @@ import Productos from "./pages/productos.jsx";
 import Nav from "./components/nav.jsx";
 import Recetas from "./pages/recetas.jsx";
 import Produccion from "./pages/produccion.jsx";
-// NUEVO
 import Historial from "./pages/historial.jsx";
+// NUEVO
+import Ventas from "./pages/ventas.jsx";
 
 export default function App() {
   return (
@@ -23,8 +24,9 @@ export default function App() {
         <Route path="/productos" element={<Productos />} />
         <Route path="/recetas" element={<Recetas />} />
         <Route path="/produccion" element={<Produccion />} />
-        {/* NUEVO */}
         <Route path="/historial" element={<Historial />} />
+        {/* NUEVO */}
+        <Route path="/ventas" element={<Ventas />} />
         <Route path="*" element={<p>404 – Página no encontrada</p>} />
       </Routes>
     </>

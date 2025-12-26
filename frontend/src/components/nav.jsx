@@ -38,9 +38,13 @@ export default function Nav() {
         Producción
       </NavLink>
 
-      {/* NUEVO */}
       <NavLink to="/historial" style={linkStyle}>
         Historial
+      </NavLink>
+
+      {/* NUEVO */}
+      <NavLink to="/ventas" style={linkStyle}>
+        Ventas
       </NavLink>
     </nav>
   );

@@ -196,3 +196,28 @@ export async function getHistorialStock() {
   return res.json();
 }
 
+export async function getVentas() {
+  const res = await fetch(`${API_URL}/ventas`);
+  if (!res.ok) throw new Error("Error al cargar ventas");
+  return res.json();
+}
+
+export async function createVenta(venta) {
+  const res = await fetch(`${API_URL}/ventas`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(venta),
+  });
+
+  const data = await res.json().catch(() => null);
+
+  if (!res.ok) {
+    if (data && data.error) {
+      throw new Error(data.error);
+    }
+    throw new Error("Error al registrar venta");
+  }
+
+  return data;
+}
+

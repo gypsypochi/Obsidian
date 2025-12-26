@@ -8,5 +8,15 @@
     "stockDespues": 38,
     "produccionId": "prodop-1766771430584",
     "fecha": "2025-12-26T17:50:30.584Z"
+  },
+  {
+    "id": "mov-1766773066668-venta",
+    "productoId": "prod-1766527364936",
+    "tipoMovimiento": "venta",
+    "cantidad": -1,
+    "stockAntes": 14,
+    "stockDespues": 13,
+    "ventaId": "venta-1766773066668",
+    "fecha": "2025-12-26T18:17:46.668Z"
   }
 ]
