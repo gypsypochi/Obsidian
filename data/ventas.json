@@ -14,5 +14,29 @@
     "precioUnitario": 4000,
     "montoTotal": 4000,
     "fecha": "2025-12-26T18:38:36.436Z"
+  },
+  {
+    "id": "venta-1766785914954",
+    "productoId": "prod-1766768898699",
+    "cantidad": 10,
+    "precioUnitario": 1000,
+    "montoTotal": 10000,
+    "fecha": "2025-12-26T21:51:54.954Z"
+  },
+  {
+    "id": "venta-1766785933301",
+    "productoId": "prod-1766768898699",
+    "cantidad": 10,
+    "precioUnitario": 1000,
+    "montoTotal": 10000,
+    "fecha": "2025-12-26T21:52:13.301Z"
+  },
+  {
+    "id": "venta-1766786023836-25",
+    "productoId": "prod-1766762332322",
+    "cantidad": 5,
+    "precioUnitario": 250,
+    "montoTotal": 1250,
+    "fecha": "2025-12-26T21:53:43.836Z"
   }
 ]

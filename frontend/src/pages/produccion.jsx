@@ -1,10 +1,17 @@
 // frontend/src/pages/produccion.jsx
-import { useEffect, useState } from "react";
-import { getProductos, getRecetas, createProduccion } from "../api";
+import { useEffect, useState, useMemo } from "react";
+import {
+  getProductos,
+  getRecetas,
+  createProduccion,
+  getModelos, // 👈 IMPORTANTE
+} from "../api";
 
 export default function Produccion() {
   const [productos, setProductos] = useState([]);
   const [recetas, setRecetas] = useState([]);
+  const [modelos, setModelos] = useState([]);
+
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [mensaje, setMensaje] = useState("");
@@ -14,16 +21,21 @@ export default function Produccion() {
   const [unidadesBuenas, setUnidadesBuenas] = useState(""); // solo para lote
   const [tipoProduccion, setTipoProduccion] = useState("unidad");
 
-  async function loadProductosYRecetas() {
+  // NUEVO: modelo/diseño asociado
+  const [modeloId, setModeloId] = useState("");
+
+  async function loadDatos() {
     try {
       setError("");
       setLoading(true);
-      const [prodData, recData] = await Promise.all([
+      const [prodData, recData, modData] = await Promise.all([
         getProductos(),
         getRecetas(),
+        getModelos(),
       ]);
       setProductos(prodData);
       setRecetas(recData);
+      setModelos(modData);
     } catch (e) {
       setError(e.message || "Error cargando datos");
     } finally {
@@ -32,22 +44,34 @@ export default function Produccion() {
   }
 
   useEffect(() => {
-    loadProductosYRecetas();
+    loadDatos();
   }, []);
 
-  // Cada vez que cambia el producto seleccionado, determinamos su tipoProduccion
+  // Cada vez que cambia el producto seleccionado:
+  // - determinamos su tipoProduccion
+  // - reseteamos el modelo seleccionado
   useEffect(() => {
     if (!productoId) {
       setTipoProduccion("unidad");
+      setModeloId("");
       return;
     }
+
     const recetaProd = recetas.find((r) => r.productoId === productoId);
     if (recetaProd && recetaProd.tipoProduccion) {
       setTipoProduccion(recetaProd.tipoProduccion);
     } else {
       setTipoProduccion("unidad");
     }
+
+    setModeloId("");
   }, [productoId, recetas]);
+
+  // Modelos disponibles para el producto seleccionado
+  const modelosDelProducto = useMemo(() => {
+    if (!productoId) return [];
+    return modelos.filter((m) => m.productoId === productoId);
+  }, [modelos, productoId]);
 
   async function onSubmit(e) {
     e.preventDefault();
@@ -81,26 +105,40 @@ export default function Produccion() {
       payload.unidadesBuenas = ubNum;
     }
 
+    // ✅ Si hay modelo seleccionado, lo enviamos
+    if (modeloId) {
+      payload.modeloId = modeloId;
+    }
+
     try {
       const resp = await createProduccion(payload);
 
       const nombreProd =
         productos.find((p) => p.id === productoId)?.nombre || "Producto";
 
+      const modeloAsociado = resp.produccion.modeloId
+        ? modelos.find((m) => m.id === resp.produccion.modeloId)
+        : null;
+
+      const textoModelo = modeloAsociado
+        ? ` Modelo: "${modeloAsociado.nombreModelo}".`
+        : "";
+
       if (resp.produccion.tipoProduccion === "lote") {
         setMensaje(
-          `Producción registrada: ${resp.produccion.cantidad} lote(s)/plancha(s) de "${nombreProd}", sumando ${resp.produccion.unidadesBuenas} unidades buenas. Stock actual del producto: ${resp.productoActualizado.stock}.`
+          `Producción registrada: ${resp.produccion.cantidad} lote(s)/plancha(s) de "${nombreProd}", sumando ${resp.produccion.unidadesBuenas} unidades buenas.${textoModelo} Stock actual del producto: ${resp.productoActualizado.stock}.`
         );
       } else {
         setMensaje(
-          `Producción registrada: ${resp.produccion.cantidad} unidad(es) de "${nombreProd}". Stock actual del producto: ${resp.productoActualizado.stock}.`
+          `Producción registrada: ${resp.produccion.cantidad} unidad(es) de "${nombreProd}".${textoModelo} Stock actual del producto: ${resp.productoActualizado.stock}.`
         );
       }
 
-      // Refrescamos productos para ver el nuevo stock en la tabla
-      await loadProductosYRecetas();
+      // Refrescamos datos para ver el nuevo stock en la tabla
+      await loadDatos();
       setCantidad(1);
       setUnidadesBuenas("");
+      setModeloId("");
     } catch (e) {
       setError(e.message || "Error registrando producción");
     }
@@ -109,6 +147,11 @@ export default function Produccion() {
   return (
     <div>
       <h1>Producción</h1>
+
+      {/* 👇 Línea de debug para que veas que se cargan modelos */}
+      <p style={{ fontSize: 12, color: "#6b7280" }}>
+        Modelos totales cargados: {modelos.length}
+      </p>
 
       {loading && <p>Cargando...</p>}
       {error && <p style={{ color: "red" }}>{error}</p>}
@@ -131,6 +174,46 @@ export default function Produccion() {
               </option>
             ))}
           </select>
+        </div>
+
+        {/* 🔹 Ahora SIEMPRE mostramos el bloque de modelo/diseño */}
+        <div style={{ marginTop: 8, marginBottom: 8 }}>
+          <label>Modelo / diseño (opcional)</label>
+          {productoId ? (
+            modelosDelProducto.length > 0 ? (
+              <>
+                <select
+                  value={modeloId}
+                  onChange={(e) => setModeloId(e.target.value)}
+                >
+                  <option value="">-- sin modelo específico --</option>
+                  {modelosDelProducto.map((m) => (
+                    <option key={m.id} value={m.id}>
+                      {m.nombreModelo}{" "}
+                      {m.categoria
+                        ? `(${m.categoria}${
+                            m.subcategoria ? " - " + m.subcategoria : ""
+                          })`
+                        : ""}
+                    </option>
+                  ))}
+                </select>
+                <p style={{ fontSize: 12 }}>
+                  Esto te permite registrar qué plancha/tapa exacta produjiste
+                  (anime, HP, memes, etc.).
+                </p>
+              </>
+            ) : (
+              <p style={{ fontSize: 12, color: "#6b7280" }}>
+                No hay modelos asociados a este producto. Podés cargarlos desde
+                la sección <b>Modelos</b>.
+              </p>
+            )
+          ) : (
+            <p style={{ fontSize: 12, color: "#6b7280" }}>
+              Elegí primero un producto para ver sus modelos disponibles.
+            </p>
+          )}
         </div>
 
         <div>

@@ -12,6 +12,8 @@ const {
   writeProducciones,
   readHistorialStock,
   writeHistorialStock,
+  // NUEVO: para validar modeloId
+  readModelos,
 } = require("../utils/fileDB");
 
 // GET /producciones - listar historial de producciones
@@ -28,13 +30,17 @@ router.get("/", (req, res) => {
 // POST /producciones - registrar una producción
 router.post("/", (req, res) => {
   try {
-    const { productoId, cantidad, unidadesBuenas } = req.body;
+    const { productoId, cantidad, unidadesBuenas, modeloId } = req.body;
 
     if (!productoId) {
       return res.status(400).json({ error: "productoId es obligatorio" });
     }
 
-    if (cantidad === undefined || typeof cantidad !== "number" || cantidad <= 0) {
+    if (
+      cantidad === undefined ||
+      typeof cantidad !== "number" ||
+      cantidad <= 0
+    ) {
       return res
         .status(400)
         .json({ error: "cantidad debe ser un número mayor a 0" });
@@ -58,6 +64,26 @@ router.post("/", (req, res) => {
 
     // Asumimos mismo tipoProduccion para todas las filas de receta de ese producto
     const tipoProduccion = recetasProducto[0].tipoProduccion || "unidad";
+
+    // ✅ NUEVO: validar modeloId (si viene) contra modelos.json
+    let modeloAsociado = null;
+    if (modeloId) {
+      const modelos = readModelos();
+      modeloAsociado = modelos.find((m) => m.id === modeloId);
+
+      if (!modeloAsociado) {
+        return res
+          .status(400)
+          .json({ error: "Modelo asociado no encontrado" });
+      }
+
+      if (modeloAsociado.productoId !== productoId) {
+        return res.status(400).json({
+          error:
+            "El modelo seleccionado no pertenece al producto indicado. Revisá la selección.",
+        });
+      }
+    }
 
     // Si es lote, unidadesBuenas es obligatorio (porque el rendimiento es variable)
     let unidadesBuenasNum = undefined;
@@ -155,6 +181,8 @@ router.post("/", (req, res) => {
       tipoProduccion,
       unidadesBuenas: tipoProduccion === "lote" ? incrementoStock : null,
       incrementoStock,
+      // ✅ guardamos modeloId si vino (sino null)
+      modeloId: modeloAsociado ? modeloAsociado.id : null,
       fecha: new Date().toISOString(),
       materialesUsados: requerimientos.map((r) => ({
         materialId: r.materialId,
@@ -165,7 +193,7 @@ router.post("/", (req, res) => {
     producciones.push(nuevaProduccion);
     writeProducciones(producciones);
 
-    // 📌 NUEVO: registrar movimiento de stock en historial-stock.json
+    // 📌 Registro en historial-stock.json
     const historial = readHistorialStock();
     const nuevoMovimiento = {
       id: `mov-${Date.now()}`,

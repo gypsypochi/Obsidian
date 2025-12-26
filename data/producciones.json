@@ -115,5 +115,61 @@
         "cantidad": 1
       }
     ]
+  },
+  {
+    "id": "prodop-1766784737693",
+    "productoId": "prod-1766762332322",
+    "cantidad": 1,
+    "tipoProduccion": "lote",
+    "unidadesBuenas": 26,
+    "incrementoStock": 26,
+    "modeloId": "mod-1766781838703",
+    "fecha": "2025-12-26T21:32:17.693Z",
+    "materialesUsados": [
+      {
+        "materialId": "mat-1766762361853",
+        "cantidad": 1
+      }
+    ]
+  },
+  {
+    "id": "prodop-1766784795274",
+    "productoId": "prod-1766527364936",
+    "cantidad": 1,
+    "tipoProduccion": "unidad",
+    "unidadesBuenas": null,
+    "incrementoStock": 1,
+    "modeloId": "mod-1766783005892",
+    "fecha": "2025-12-26T21:33:15.274Z",
+    "materialesUsados": [
+      {
+        "materialId": "mat-1766518351924",
+        "cantidad": 1
+      },
+      {
+        "materialId": "mat-1766518457021",
+        "cantidad": 1
+      }
+    ]
+  },
+  {
+    "id": "prodop-1766785858308",
+    "productoId": "prod-1766768898699",
+    "cantidad": 1,
+    "tipoProduccion": "lote",
+    "unidadesBuenas": 9,
+    "incrementoStock": 9,
+    "modeloId": null,
+    "fecha": "2025-12-26T21:50:58.308Z",
+    "materialesUsados": [
+      {
+        "materialId": "mat-1766768815323",
+        "cantidad": 1
+      },
+      {
+        "materialId": "mat-1766768854090",
+        "cantidad": 1
+      }
+    ]
   }
 ]

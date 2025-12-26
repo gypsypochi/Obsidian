@@ -29,5 +29,66 @@
     "ventaId": "venta-1766774316436-160",
     "pedidoId": "ped-1766774272321",
     "fecha": "2025-12-26T18:38:36.436Z"
+  },
+  {
+    "id": "mov-1766784737693",
+    "productoId": "prod-1766762332322",
+    "tipoMovimiento": "produccion",
+    "cantidad": 26,
+    "stockAntes": 105,
+    "stockDespues": 131,
+    "produccionId": "prodop-1766784737693",
+    "fecha": "2025-12-26T21:32:17.693Z"
+  },
+  {
+    "id": "mov-1766784795274",
+    "productoId": "prod-1766527364936",
+    "tipoMovimiento": "produccion",
+    "cantidad": 1,
+    "stockAntes": 12,
+    "stockDespues": 13,
+    "produccionId": "prodop-1766784795274",
+    "fecha": "2025-12-26T21:33:15.274Z"
+  },
+  {
+    "id": "mov-1766785858308",
+    "productoId": "prod-1766768898699",
+    "tipoMovimiento": "produccion",
+    "cantidad": 9,
+    "stockAntes": 38,
+    "stockDespues": 47,
+    "produccionId": "prodop-1766785858308",
+    "fecha": "2025-12-26T21:50:58.308Z"
+  },
+  {
+    "id": "mov-1766785914955-venta",
+    "productoId": "prod-1766768898699",
+    "tipoMovimiento": "venta",
+    "cantidad": -10,
+    "stockAntes": 47,
+    "stockDespues": 37,
+    "ventaId": "venta-1766785914954",
+    "fecha": "2025-12-26T21:51:54.954Z"
+  },
+  {
+    "id": "mov-1766785933301-venta",
+    "productoId": "prod-1766768898699",
+    "tipoMovimiento": "venta",
+    "cantidad": -10,
+    "stockAntes": 37,
+    "stockDespues": 27,
+    "ventaId": "venta-1766785933301",
+    "fecha": "2025-12-26T21:52:13.301Z"
+  },
+  {
+    "id": "mov-1766786023836-venta-pedido-958",
+    "productoId": "prod-1766762332322",
+    "tipoMovimiento": "venta",
+    "cantidad": -5,
+    "stockAntes": 131,
+    "stockDespues": 126,
+    "ventaId": "venta-1766786023836-25",
+    "pedidoId": "ped-1766775248283",
+    "fecha": "2025-12-26T21:53:43.836Z"
   }
 ]

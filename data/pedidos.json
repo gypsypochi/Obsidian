@@ -37,7 +37,7 @@
   {
     "id": "ped-1766775248283",
     "cliente": "Kinesiologa",
-    "estado": "pendiente",
+    "estado": "entregado",
     "items": [
       {
         "productoId": "prod-1766762332322",
@@ -46,11 +46,13 @@
     ],
     "notas": "5 sticker de mafalda",
     "fechaCreacion": "2025-12-26T18:54:08.283Z",
-    "fechaEntrega": null,
+    "fechaEntrega": "2025-12-26T21:53:43.837Z",
     "fechaLimite": "2025-12-21T00:00:00.000Z",
     "canal": "Presencial",
     "urgente": false,
-    "ventasIds": []
+    "ventasIds": [
+      "venta-1766786023836-25"
+    ]
   },
   {
     "id": "ped-1766775300956",

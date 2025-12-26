@@ -4,7 +4,7 @@
     "nombre": "cuaderno a5",
     "categoria": "cuadernos",
     "precio": 4000,
-    "stock": 12,
+    "stock": 13,
     "unidad": "unidad",
     "proveedorId": "yo"
   },
@@ -13,7 +13,7 @@
     "nombre": "Sticker 5cm",
     "categoria": "stickers",
     "precio": 250,
-    "stock": 105,
+    "stock": 126,
     "unidad": "unidad",
     "proveedorId": "Propio"
   },
@@ -22,7 +22,7 @@
     "nombre": "Iman",
     "categoria": "iman",
     "precio": 1000,
-    "stock": 38,
+    "stock": 27,
     "unidad": "unidad",
     "proveedorId": "Propio"
   }
