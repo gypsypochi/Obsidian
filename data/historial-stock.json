@@ -101,5 +101,15 @@
     "produccionId": "prodop-1767038361378",
     "fecha": "2025-12-29T19:59:21.378Z",
     "modeloId": "mod-1766781838703"
+  },
+  {
+    "id": "mov-1767039933122-venta",
+    "productoId": "prod-1766527364936",
+    "tipoMovimiento": "venta",
+    "cantidad": -1,
+    "stockAntes": 13,
+    "stockDespues": 12,
+    "ventaId": "venta-1767039933121",
+    "fecha": "2025-12-29T20:25:33.121Z"
   }
 ]

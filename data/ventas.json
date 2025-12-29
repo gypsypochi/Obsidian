@@ -38,5 +38,17 @@
     "precioUnitario": 250,
     "montoTotal": 1250,
     "fecha": "2025-12-26T21:53:43.836Z"
+  },
+  {
+    "id": "venta-1767039933121",
+    "productoId": "prod-1766527364936",
+    "cantidad": 1,
+    "precioUnitario": 4000,
+    "montoTotal": 4000,
+    "fecha": "2025-12-29T20:25:33.121Z",
+    "canal": "feria",
+    "feriaId": "feria-1767029890368",
+    "origen": null,
+    "detalleModelo": "Cuaderno panda"
   }
 ]

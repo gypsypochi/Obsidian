@@ -4,7 +4,7 @@
     "nombre": "cuaderno a5",
     "categoria": "cuadernos",
     "precio": 4000,
-    "stock": 13,
+    "stock": 12,
     "unidad": "unidad",
     "proveedorId": "yo"
   },
