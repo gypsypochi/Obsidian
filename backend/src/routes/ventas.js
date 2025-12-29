@@ -25,7 +25,15 @@ router.get("/", (req, res) => {
 // POST /ventas - registrar una venta
 router.post("/", (req, res) => {
   try {
-    const { productoId, cantidad, precioUnitario } = req.body;
+    const {
+      productoId,
+      cantidad,
+      precioUnitario,
+      origen,       // 🔹 NUEVO
+      subCanal,     // 🔹 NUEVO (para online)
+      feriaNombre,  // 🔹 NUEVO (nombre libre de la feria)
+      notasCanal,   // 🔹 NUEVO (comentarios del canal)
+    } = req.body;
 
     if (!productoId) {
       return res.status(400).json({ error: "productoId es obligatorio" });
@@ -76,6 +84,20 @@ router.post("/", (req, res) => {
     const stockAntes = stockActual;
     const stockDespues = stockAntes - cantNum;
 
+    // Normalizar canal / origen (para futuro ferias / online)
+    const origenRaw = (origen || "").toString().trim().toLowerCase();
+    let origenFinal = "directo"; // por defecto
+    if (["feria", "online", "directo"].includes(origenRaw)) {
+      origenFinal = origenRaw;
+    } else if (origenRaw) {
+      // si vino algo raro, lo guardamos igual
+      origenFinal = origenRaw;
+    }
+
+    const subCanalFinal = (subCanal || "").toString().trim() || null;
+    const feriaNombreFinal = (feriaNombre || "").toString().trim() || null;
+    const notasCanalFinal = (notasCanal || "").toString().trim();
+
     // Actualizar stock del producto
     productos[productoIndex].stock = stockDespues;
     writeProductos(productos);
@@ -88,6 +110,10 @@ router.post("/", (req, res) => {
       cantidad: cantNum,
       precioUnitario: precioUnitarioNum,
       montoTotal,
+      origen: origenFinal,          // 🔹 NUEVO
+      subCanal: subCanalFinal,      // 🔹 NUEVO
+      feriaNombre: feriaNombreFinal,// 🔹 NUEVO
+      notasCanal: notasCanalFinal,  // 🔹 NUEVO
       fecha: new Date().toISOString(),
     };
     ventas.push(nuevaVenta);
