@@ -672,6 +672,107 @@ export default function Balance() {
 
   function renderSeccionDashboard() {
     const totalGastosNum = totalGastos || 0;
+    const totalIngresosNum = totalIngresos || 0;
+
+    // 🔔 Alertas calculadas en base a los datos existentes
+    const feriasNegativas = (balancePorFeria || []).filter((f) => f.neto < 0);
+    const feriasMargenBajo = (balancePorFeria || []).filter((f) => {
+      if (f.neto < 0) return false;
+      if (!f.ingresos || f.ingresos <= 0) return false;
+      const margen = (f.neto / f.ingresos) * 100;
+      return margen >= 0 && margen < 15; // margen menor al 15%
+    });
+
+    const tieneAlertaGlobalNegativa = resultadoNeto < 0;
+    const tieneAlertaGastoAlto =
+      porcentajeGastosSobreIngresos != null &&
+      porcentajeGastosSobreIngresos > 70;
+
+    const hayAlertas =
+      tieneAlertaGlobalNegativa ||
+      tieneAlertaGastoAlto ||
+      feriasNegativas.length > 0 ||
+      feriasMargenBajo.length > 0;
+
+    const feriasNegativasTexto = [...feriasNegativas]
+      .sort((a, b) => a.neto - b.neto)
+      .slice(0, 3)
+      .map(
+        (f) =>
+          `${f.nombre} (${formatMontoConSigno(f.neto)} ARS)`
+      )
+      .join(" · ");
+
+    const feriasMargenBajoTexto = [...feriasMargenBajo]
+      .sort((a, b) => {
+        const ma = a.ingresos ? (a.neto / a.ingresos) * 100 : 0;
+        const mb = b.ingresos ? (b.neto / b.ingresos) * 100 : 0;
+        return ma - mb;
+      })
+      .slice(0, 3)
+      .map((f) => {
+        const margen = f.ingresos
+          ? ((f.neto / f.ingresos) * 100).toFixed(1).replace(".", ",")
+          : "0";
+        return `${f.nombre} (${margen}% margen)`;
+      })
+      .join(" · ");
+
+    // 📊 Insights adicionales
+
+    // Top 3 productos – concentración de ingresos
+    const top3Productos = (rankingProductos || []).slice(0, 3);
+    const ingresosTop3 = top3Productos.reduce(
+      (acc, p) => acc + (p.ingresos || 0),
+      0
+    );
+    const porcentajeTop3 =
+      totalIngresosNum > 0 ? (ingresosTop3 / totalIngresosNum) * 100 : null;
+
+    // Canal principal de ingresos
+    let canalPrincipal = null;
+    let porcentajeCanalPrincipal = null;
+    if (resumenCanales && resumenCanales.length > 0 && totalIngresosNum > 0) {
+      canalPrincipal = resumenCanales.reduce((acc, c) =>
+        !acc || c.ingresos > acc.ingresos ? c : acc
+      , null);
+      if (canalPrincipal) {
+        porcentajeCanalPrincipal =
+          (canalPrincipal.ingresos / totalIngresosNum) * 100;
+      }
+    }
+
+    function labelCanal(canal) {
+      if (canal === "feria") return "Feria";
+      if (canal === "online") return "Online";
+      if (canal === "presencial") return "Presencial";
+      if (canal === "sin_canal") return "Sin canal";
+      return canal || "Sin canal";
+    }
+
+    // Mejor / peor feria
+    let mejorFeria = null;
+    let peorFeria = null;
+    if (balancePorFeria && balancePorFeria.length > 0) {
+      mejorFeria = balancePorFeria.reduce((acc, f) =>
+        !acc || f.neto > acc.neto ? f : acc
+      , null);
+      peorFeria = balancePorFeria.reduce((acc, f) =>
+        !acc || f.neto < acc.neto ? f : acc
+      , null);
+    }
+
+    // Mejor / peor mes (últimos 6)
+    let mejorMes = null;
+    let peorMes = null;
+    if (ingresosPorMes && ingresosPorMes.length > 0) {
+      mejorMes = ingresosPorMes.reduce((acc, m) =>
+        !acc || m.ingresos > acc.ingresos ? m : acc
+      , null);
+      peorMes = ingresosPorMes.reduce((acc, m) =>
+        !acc || m.ingresos < acc.ingresos ? m : acc
+      , null);
+    }
 
     return (
       <div
@@ -682,6 +783,309 @@ export default function Balance() {
           gap: 24,
         }}
       >
+        {/* 🔔 Bloque de alertas */}
+        <div
+          style={{
+            border: "1px solid #4b5563",
+            borderRadius: 8,
+            padding: 12,
+            backgroundColor: hayAlertas ? "#111827" : "#022c22",
+          }}
+        >
+          <p
+            style={{
+              margin: "0 0 6px",
+              fontSize: 13,
+              fontWeight: 600,
+              display: "flex",
+              alignItems: "center",
+              gap: 6,
+            }}
+          >
+            <span>🔔 Alertas del negocio</span>
+          </p>
+
+          {!hayAlertas ? (
+            <p
+              style={{
+                margin: 0,
+                fontSize: 13,
+                color: "#6ee7b7",
+              }}
+            >
+              Todo en orden, no hay alertas por ahora ✨
+            </p>
+          ) : (
+            <ul
+              style={{
+                margin: 0,
+                paddingLeft: 18,
+                fontSize: 13,
+                display: "flex",
+                flexDirection: "column",
+                gap: 4,
+              }}
+            >
+              {tieneAlertaGlobalNegativa && (
+                <li
+                  style={{
+                    color: "#fca5a5",
+                  }}
+                >
+                  Resultado global negativo:{" "}
+                  <strong>
+                    {formatMontoConSigno(resultadoNeto)} ARS
+                  </strong>
+                  . Revisá costos, precios o ferias deficitarias.
+                </li>
+              )}
+
+              {tieneAlertaGastoAlto && (
+                <li
+                  style={{
+                    color: "#f97316",
+                  }}
+                >
+                  Los gastos representan el{" "}
+                  <strong>
+                    {porcentajeGastosSobreIngresos
+                      ?.toFixed(1)
+                      .replace(".", ",")}
+                    %
+                  </strong>{" "}
+                  de los ingresos. Podría ser un nivel de gasto alto.
+                </li>
+              )}
+
+              {feriasNegativas.length > 0 && (
+                <li
+                  style={{
+                    color: "#fecaca",
+                  }}
+                >
+                  Ferias en negativo:{" "}
+                  <strong>{feriasNegativasTexto}</strong>
+                  {feriasNegativas.length > 3 && " …"}
+                </li>
+              )}
+
+              {feriasMargenBajo.length > 0 && (
+                <li
+                  style={{
+                    color: "#facc15",
+                  }}
+                >
+                  Ferias con margen muy ajustado:{" "}
+                  <strong>{feriasMargenBajoTexto}</strong>
+                  {feriasMargenBajo.length > 3 && " …"}
+                </li>
+              )}
+            </ul>
+          )}
+        </div>
+
+        {/* 📊 Bloque de insights rápidos */}
+        <div
+          style={{
+            display: "flex",
+            flexWrap: "wrap",
+            gap: 16,
+          }}
+        >
+          {/* Top 3 productos */}
+          <div
+            style={{
+              flex: "1 1 240px",
+              minWidth: 240,
+              border: "1px solid #4b5563",
+              borderRadius: 8,
+              padding: 12,
+            }}
+          >
+            <p style={{ margin: 0, fontSize: 12, color: "#9ca3af" }}>
+              Concentración de productos
+            </p>
+            {porcentajeTop3 != null && top3Productos.length > 0 ? (
+              <>
+                <p
+                  style={{
+                    margin: "4px 0",
+                    fontSize: 13,
+                  }}
+                >
+                  Tus <strong>3 productos top</strong> concentran{" "}
+                  <strong>
+                    {porcentajeTop3.toFixed(1).replace(".", ",")}%
+                  </strong>{" "}
+                  de los ingresos.
+                </p>
+                <p
+                  style={{
+                    margin: 0,
+                    fontSize: 11,
+                    color: "#9ca3af",
+                  }}
+                >
+                  Ingresos top 3: ${formatMonto(ingresosTop3)} ARS
+                </p>
+              </>
+            ) : (
+              <p style={{ margin: "4px 0 0", fontSize: 13, color: "#9ca3af" }}>
+                Todavía no hay suficientes ventas para calcularlo.
+              </p>
+            )}
+          </div>
+
+          {/* Canal principal */}
+          <div
+            style={{
+              flex: "1 1 240px",
+              minWidth: 240,
+              border: "1px solid #4b5563",
+              borderRadius: 8,
+              padding: 12,
+            }}
+          >
+            <p style={{ margin: 0, fontSize: 12, color: "#9ca3af" }}>
+              Canal principal de ingresos
+            </p>
+            {canalPrincipal && porcentajeCanalPrincipal != null ? (
+              <>
+                <p
+                  style={{
+                    margin: "4px 0",
+                    fontSize: 13,
+                  }}
+                >
+                  El canal <strong>{labelCanal(canalPrincipal.canal)}</strong>{" "}
+                  concentra{" "}
+                  <strong>
+                    {porcentajeCanalPrincipal
+                      .toFixed(1)
+                      .replace(".", ",")}
+                    %
+                  </strong>{" "}
+                  de tus ingresos.
+                </p>
+                <p
+                  style={{
+                    margin: 0,
+                    fontSize: 11,
+                    color: "#9ca3af",
+                  }}
+                >
+                  Ingresos por este canal: $
+                  {formatMonto(canalPrincipal.ingresos)} ARS
+                </p>
+              </>
+            ) : (
+              <p style={{ margin: "4px 0 0", fontSize: 13, color: "#9ca3af" }}>
+                Aún no hay datos suficientes por canal.
+              </p>
+            )}
+          </div>
+
+          {/* Mejor / peor feria */}
+          <div
+            style={{
+              flex: "1 1 260px",
+              minWidth: 260,
+              border: "1px solid #4b5563",
+              borderRadius: 8,
+              padding: 12,
+            }}
+          >
+            <p style={{ margin: 0, fontSize: 12, color: "#9ca3af" }}>
+              Ferias destacadas
+            </p>
+            {mejorFeria || peorFeria ? (
+              <div style={{ marginTop: 4, fontSize: 13 }}>
+                {mejorFeria && (
+                  <p style={{ margin: "0 0 4px" }}>
+                    🥇 Mejor feria:{" "}
+                    <strong>{mejorFeria.nombre}</strong>{" "}
+                    <span
+                      style={{
+                        color: colorPorValor(mejorFeria.neto),
+                        fontWeight: 600,
+                      }}
+                    >
+                      ({formatMontoConSigno(mejorFeria.neto)} ARS)
+                    </span>
+                  </p>
+                )}
+                {peorFeria && (
+                  <p style={{ margin: 0 }}>
+                    🥶 Peor feria:{" "}
+                    <strong>{peorFeria.nombre}</strong>{" "}
+                    <span
+                      style={{
+                        color: colorPorValor(peorFeria.neto),
+                        fontWeight: 600,
+                      }}
+                    >
+                      ({formatMontoConSigno(peorFeria.neto)} ARS)
+                    </span>
+                  </p>
+                )}
+              </div>
+            ) : (
+              <p style={{ margin: "4px 0 0", fontSize: 13, color: "#9ca3af" }}>
+                Todavía no hay datos de ferias suficientes.
+              </p>
+            )}
+          </div>
+
+          {/* Mejor / peor mes */}
+          <div
+            style={{
+              flex: "1 1 260px",
+              minWidth: 260,
+              border: "1px solid #4b5563",
+              borderRadius: 8,
+              padding: 12,
+            }}
+          >
+            <p style={{ margin: 0, fontSize: 12, color: "#9ca3af" }}>
+              Meses más fuertes / flojos
+            </p>
+            {mejorMes || peorMes ? (
+              <div style={{ marginTop: 4, fontSize: 13 }}>
+                {mejorMes && (
+                  <p style={{ margin: "0 0 4px" }}>
+                    📈 Mejor mes:{" "}
+                    <strong>{mejorMes.mes}</strong>{" "}
+                    <span
+                      style={{
+                        fontWeight: 600,
+                      }}
+                    >
+                      (${formatMonto(mejorMes.ingresos)} ARS)
+                    </span>
+                  </p>
+                )}
+                {peorMes && (
+                  <p style={{ margin: 0 }}>
+                    📉 Mes más flojo:{" "}
+                    <strong>{peorMes.mes}</strong>{" "}
+                    <span
+                      style={{
+                        fontWeight: 600,
+                      }}
+                    >
+                      (${formatMonto(peorMes.ingresos)} ARS)
+                    </span>
+                  </p>
+                )}
+              </div>
+            ) : (
+              <p style={{ margin: "4px 0 0", fontSize: 13, color: "#9ca3af" }}>
+                Todavía no hay suficientes meses con ventas para comparar.
+              </p>
+            )}
+          </div>
+        </div>
+
         {/* KPIs principales */}
         <div
           style={{
@@ -949,13 +1353,7 @@ export default function Balance() {
                         ? (c.ingresos / totalIngresos) * 100
                         : 0;
 
-                    let label = c.canal;
-                    if (c.canal === "feria") label = "Feria";
-                    else if (c.canal === "online") label = "Online";
-                    else if (c.canal === "presencial")
-                      label = "Presencial";
-                    else if (c.canal === "sin_canal")
-                      label = "Sin canal";
+                    let label = labelCanal(c.canal);
 
                     return (
                       <tr key={c.canal}>
