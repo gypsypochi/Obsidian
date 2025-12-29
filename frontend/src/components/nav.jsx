@@ -77,6 +77,11 @@ export default function Nav() {
         Ventas
       </NavLink>
 
+      {/* 👉 NUEVO: link a Balance */}
+      <NavLink to="/balance" style={linkStyle}>
+        Balance
+      </NavLink>
+
       {/* 👉 NUEVO: link a Ferias */}
       <NavLink to="/ferias" style={linkStyle}>
         Ferias

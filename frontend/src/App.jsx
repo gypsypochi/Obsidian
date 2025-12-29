@@ -16,6 +16,8 @@ import Modelos from "./pages/modelos.jsx";
 import Ferias from "./pages/ferias.jsx";
 // 👉 NUEVO:
 import Gastos from "./pages/gastos.jsx";
+// 👉 NUEVO: Balance / Panel
+import Balance from "./pages/balance.jsx";
 
 export default function App() {
   return (
@@ -37,6 +39,8 @@ export default function App() {
         <Route path="/ferias" element={<Ferias />} />
         {/* 👉 NUEVO: ruta de Gastos */}
         <Route path="/gastos" element={<Gastos />} />
+        {/* 👉 NUEVO: ruta de Balance */}
+        <Route path="/balance" element={<Balance />} />
 
         <Route path="*" element={<p>404 – Página no encontrada</p>} />
       </Routes>
