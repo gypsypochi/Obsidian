@@ -77,14 +77,18 @@ export default function Nav() {
         Ventas
       </NavLink>
 
+      {/* 👉 NUEVO: link a Ferias */}
+      <NavLink to="/ferias" style={linkStyle}>
+        Ferias
+      </NavLink>
+
       <NavLink to="/pedidos" style={linkStyle}>
         {pedidosLabel}
       </NavLink>
 
       <NavLink to="/modelos" style={linkStyle}>
-         Modelos
+        Modelos
       </NavLink>
-
     </nav>
   );
 }

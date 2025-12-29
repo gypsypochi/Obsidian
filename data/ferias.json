@@ -1,0 +1,34 @@
+[
+  {
+    "id": "feria-1767029890368",
+    "nombre": "Hay mas feria",
+    "fecha": "2026-01-04T12:00",
+    "lugar": "Espacio cultural Plaza defensa",
+    "direccion": "Defensa 535",
+    "costoBase": 30000,
+    "estado": "planeada",
+    "notas": "Hasta las 19hs",
+    "flyerUrl": "http://localhost:3001/uploads/imagenes/WhatsApp Image 2025-12-29 at 14.35.47-1767029882226.jpeg",
+    "totalVentas": 0,
+    "totalGastos": 0,
+    "gananciaNeta": 0,
+    "createdAt": "2025-12-29T17:38:10.368Z",
+    "updatedAt": "2025-12-29T17:38:10.368Z"
+  },
+  {
+    "id": "feria-1767030008287",
+    "nombre": "Feria Spooky",
+    "fecha": "2025-12-14T13:00",
+    "lugar": "Casona humahuaca",
+    "direccion": "Humahuaca 3508",
+    "costoBase": 30000,
+    "estado": "pospuesta",
+    "notas": "Pospuesta para abril",
+    "flyerUrl": "http://localhost:3001/uploads/imagenes/WhatsApp Image 2025-12-29 at 14.36.28-1767030353146.jpeg",
+    "totalVentas": 0,
+    "totalGastos": 0,
+    "gananciaNeta": 0,
+    "createdAt": "2025-12-29T17:40:08.287Z",
+    "updatedAt": "2025-12-29T17:45:55.404Z"
+  }
+]

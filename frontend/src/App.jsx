@@ -9,11 +9,11 @@ import Nav from "./components/nav.jsx";
 import Recetas from "./pages/recetas.jsx";
 import Produccion from "./pages/produccion.jsx";
 import Historial from "./pages/historial.jsx";
-// NUEVO
 import Pedidos from "./pages/pedidos.jsx";
-import Ventas from "./pages/ventas.jsx"; // asumo que ya existe
+import Ventas from "./pages/ventas.jsx";
 import Modelos from "./pages/modelos.jsx";
-
+// 👉 NUEVO:
+import Ferias from "./pages/ferias.jsx";
 
 export default function App() {
   return (
@@ -29,9 +29,10 @@ export default function App() {
         <Route path="/produccion" element={<Produccion />} />
         <Route path="/historial" element={<Historial />} />
         <Route path="/ventas" element={<Ventas />} />
-        {/* NUEVO */}
         <Route path="/pedidos" element={<Pedidos />} />
         <Route path="/modelos" element={<Modelos />} />
+        {/* 👉 NUEVO: ruta de Ferias */}
+        <Route path="/ferias" element={<Ferias />} />
 
         <Route path="*" element={<p>404 – Página no encontrada</p>} />
       </Routes>

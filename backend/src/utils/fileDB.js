@@ -19,6 +19,9 @@ const modelosPath = path.join(__dirname, "../../../data/modelos.json");
 const ventasPath = path.join(__dirname, "../../../data/ventas.json");
 const pedidosPath = path.join(__dirname, "../../../data/pedidos.json");
 
+// NUEVO: ferias
+const feriasPath = path.join(__dirname, "../../../data/ferias.json");
+
 function readJson(filePath) {
   const raw = fs.readFileSync(filePath, "utf-8");
   return JSON.parse(raw);
@@ -112,7 +115,7 @@ function writeVentas(ventas) {
   writeJson(ventasPath, ventas || []);
 }
 
-// --- PEDIDOS (NUEVO) ---
+// --- PEDIDOS ---
 function readPedidos() {
   try {
     return readJson(pedidosPath);
@@ -126,7 +129,7 @@ function writePedidos(pedidos) {
   writeJson(pedidosPath, pedidos || []);
 }
 
-// --- MODELOS / DISEÑOS (NUEVO) ---
+// --- MODELOS / DISEÑOS ---
 function readModelos() {
   try {
     return readJson(modelosPath);
@@ -138,6 +141,20 @@ function readModelos() {
 
 function writeModelos(modelos) {
   writeJson(modelosPath, modelos || []);
+}
+
+// --- FERIAS (NUEVO) ---
+function readFerias() {
+  try {
+    return readJson(feriasPath);
+  } catch (err) {
+    console.error("Error leyendo ferias.json, devolviendo []:", err.message);
+    return [];
+  }
+}
+
+function writeFerias(ferias) {
+  writeJson(feriasPath, ferias || []);
 }
 
 module.exports = {
@@ -159,4 +176,7 @@ module.exports = {
   writePedidos,
   readModelos,
   writeModelos,
+  // NUEVO
+  readFerias,
+  writeFerias,
 };

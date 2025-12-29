@@ -367,3 +367,53 @@ export async function uploadPlancha(file) {
 
   return data; // { url }
 }
+
+// --- FERIAS ---
+export async function getFerias() {
+  const res = await fetch(`${API_URL}/ferias`);
+  if (!res.ok) throw new Error("Error al cargar ferias");
+  return res.json();
+}
+
+export async function createFeria(feria) {
+  const res = await fetch(`${API_URL}/ferias`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(feria),
+  });
+
+  const data = await res.json().catch(() => null);
+  if (!res.ok) {
+    if (data && data.error) throw new Error(data.error);
+    throw new Error("Error al crear feria");
+  }
+  return data;
+}
+
+export async function updateFeria(id, updates) {
+  const res = await fetch(`${API_URL}/ferias/${id}`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(updates),
+  });
+
+  const data = await res.json().catch(() => null);
+  if (!res.ok) {
+    if (data && data.error) throw new Error(data.error);
+    throw new Error("Error al actualizar feria");
+  }
+  return data;
+}
+
+export async function deleteFeria(id) {
+  const res = await fetch(`${API_URL}/ferias/${id}`, {
+    method: "DELETE",
+  });
+
+  const data = await res.json().catch(() => null);
+  if (!res.ok) {
+    if (data && data.error) throw new Error(data.error);
+    throw new Error("Error al eliminar feria");
+  }
+  return data;
+}

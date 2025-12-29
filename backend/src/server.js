@@ -1,3 +1,4 @@
+// backend/src/server.js
 const express = require("express");
 const cors = require("cors");
 const path = require("path");
@@ -11,8 +12,8 @@ const historialRoutes = require("./routes/historial");
 const ventasRoutes = require("./routes/ventas");
 const pedidosRoutes = require("./routes/pedidos");
 
-// ⭐ NUEVO: modelos
-const modelosRoutes = require("./routes/modelos");
+// NUEVO: ferias
+const feriasRoutes = require("./routes/ferias");
 
 // NUEVO: rutas de upload
 const uploadRoutes = require("./routes/upload");
@@ -44,8 +45,8 @@ app.use("/historial", historialRoutes);
 app.use("/ventas", ventasRoutes);
 app.use("/pedidos", pedidosRoutes);
 
-// ⭐ NUEVO: modelos
-app.use("/modelos", modelosRoutes);
+// NUEVO: ferias
+app.use("/ferias", feriasRoutes);
 
 // NUEVO: endpoint para subir archivos
 app.use("/upload", uploadRoutes);
