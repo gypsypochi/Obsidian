@@ -190,6 +190,17 @@ export async function createProduccion(produccion) {
   return data;
 }
 
+// 🔹 AGREGAR ESTO:
+export async function getProducciones() {
+  const res = await fetch(`${API_URL}/producciones`);
+
+  if (!res.ok) {
+    throw new Error("Error al cargar producciones");
+  }
+
+  return res.json();
+}
+
 export async function getHistorialStock() {
   const res = await fetch(`${API_URL}/historial`);
   if (!res.ok) throw new Error("Error al cargar historial de stock");
