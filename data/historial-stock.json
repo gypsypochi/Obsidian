@@ -90,5 +90,16 @@
     "ventaId": "venta-1766786023836-25",
     "pedidoId": "ped-1766775248283",
     "fecha": "2025-12-26T21:53:43.836Z"
+  },
+  {
+    "id": "mov-1767038361379",
+    "productoId": "prod-1766762332322",
+    "tipoMovimiento": "produccion",
+    "cantidad": 25,
+    "stockAntes": 126,
+    "stockDespues": 151,
+    "produccionId": "prodop-1767038361378",
+    "fecha": "2025-12-29T19:59:21.378Z",
+    "modeloId": "mod-1766781838703"
   }
 ]

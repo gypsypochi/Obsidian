@@ -14,6 +14,8 @@ import Ventas from "./pages/ventas.jsx";
 import Modelos from "./pages/modelos.jsx";
 // 👉 NUEVO:
 import Ferias from "./pages/ferias.jsx";
+// 👉 NUEVO:
+import Gastos from "./pages/gastos.jsx";
 
 export default function App() {
   return (
@@ -33,6 +35,8 @@ export default function App() {
         <Route path="/modelos" element={<Modelos />} />
         {/* 👉 NUEVO: ruta de Ferias */}
         <Route path="/ferias" element={<Ferias />} />
+        {/* 👉 NUEVO: ruta de Gastos */}
+        <Route path="/gastos" element={<Gastos />} />
 
         <Route path="*" element={<p>404 – Página no encontrada</p>} />
       </Routes>

@@ -1,0 +1,58 @@
+[
+  {
+    "id": "g-0001",
+    "fecha": "2025-12-29T19:33:31.079Z",
+    "tipo": "materiales",
+    "categoria": "papel fotografico",
+    "descripcion": "papel fotografico 230gr",
+    "monto": 9900,
+    "moneda": "ARS",
+    "medioPago": "efectivo",
+    "proveedorId": "prov-1766526211921",
+    "feriaId": null,
+    "materialId": "mat-1766768854090",
+    "notas": ""
+  },
+  {
+    "id": "g-0002",
+    "fecha": "2025-12-29T19:33:50.967Z",
+    "tipo": "feria",
+    "categoria": "feria",
+    "descripcion": "Costo feria Hay mas feria",
+    "monto": 30000,
+    "moneda": "ARS",
+    "medioPago": "efectivo",
+    "proveedorId": null,
+    "feriaId": "feria-1767029890368",
+    "materialId": null,
+    "notas": ""
+  },
+  {
+    "id": "g-0003",
+    "fecha": "2025-12-29T19:34:30.409Z",
+    "tipo": "otro",
+    "categoria": "Software",
+    "descripcion": "Canva",
+    "monto": 85000,
+    "moneda": "ARS",
+    "medioPago": "credito",
+    "proveedorId": null,
+    "feriaId": null,
+    "materialId": null,
+    "notas": ""
+  },
+  {
+    "id": "g-0004",
+    "fecha": "2025-12-29T19:46:43.483Z",
+    "tipo": "materiales",
+    "categoria": "iman",
+    "descripcion": "Hoja imantada a4",
+    "monto": 9000,
+    "moneda": "ARS",
+    "medioPago": "efectivo",
+    "proveedorId": "prov-1766526266439",
+    "feriaId": null,
+    "materialId": "mat-1766768815323",
+    "notas": ""
+  }
+]

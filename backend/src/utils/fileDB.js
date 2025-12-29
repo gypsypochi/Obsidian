@@ -7,20 +7,12 @@ const proveedoresPath = path.join(__dirname, "../../../data/proveedores.json");
 const productosPath = path.join(__dirname, "../../../data/productos.json");
 const recetasPath = path.join(__dirname, "../../../data/recetas.json");
 const produccionesPath = path.join(__dirname, "../../../data/producciones.json");
-const historialStockPath = path.join(
-  __dirname,
-  "../../../data/historial-stock.json"
-);
-
-// NUEVO: modelos (diseños/plancha/cuadernos)
+const historialStockPath = path.join(__dirname, "../../../data/historial-stock.json");
 const modelosPath = path.join(__dirname, "../../../data/modelos.json");
-
-// NUEVO: rutas de archivos extra
 const ventasPath = path.join(__dirname, "../../../data/ventas.json");
 const pedidosPath = path.join(__dirname, "../../../data/pedidos.json");
-
-// NUEVO: ferias
 const feriasPath = path.join(__dirname, "../../../data/ferias.json");
+const gastosPath = path.join(__dirname, "../../../data/gastos.json");
 
 function readJson(filePath) {
   const raw = fs.readFileSync(filePath, "utf-8");
@@ -31,77 +23,65 @@ function writeJson(filePath, data) {
   fs.writeFileSync(filePath, JSON.stringify(data, null, 2));
 }
 
-// --- MATERIALES ---
+// Materiales
 function readMaterials() {
   return readJson(materialesPath);
 }
-
 function writeMaterials(materials) {
   writeJson(materialesPath, materials);
 }
 
-// --- PROVEEDORES ---
+// Proveedores
 function readProveedores() {
   return readJson(proveedoresPath);
 }
-
 function writeProveedores(proveedores) {
   writeJson(proveedoresPath, proveedores);
 }
 
-// --- PRODUCTOS ---
+// Productos
 function readProductos() {
   return readJson(productosPath);
 }
-
 function writeProductos(productos) {
   writeJson(productosPath, productos);
 }
 
-// --- RECETAS ---
+// Recetas
 function readRecetas() {
   return readJson(recetasPath);
 }
-
 function writeRecetas(recetas) {
   writeJson(recetasPath, recetas);
 }
 
-// --- PRODUCCIONES (BLINDADO) ---
+// Producciones
 function readProducciones() {
   try {
     return readJson(produccionesPath);
   } catch (err) {
-    console.error(
-      "Error leyendo producciones.json, devolviendo []:",
-      err.message
-    );
+    console.error("Error leyendo producciones.json, devolviendo []:", err.message);
     return [];
   }
 }
-
 function writeProducciones(producciones) {
   writeJson(produccionesPath, producciones || []);
 }
 
-// --- HISTORIAL DE STOCK ---
+// Historial stock
 function readHistorialStock() {
   try {
     return readJson(historialStockPath);
   } catch (err) {
-    console.error(
-      "Error leyendo historial-stock.json, devolviendo []:",
-      err.message
-    );
+    console.error("Error leyendo historial-stock.json, devolviendo []:", err.message);
     return [];
   }
 }
-
 function writeHistorialStock(historial) {
   writeJson(historialStockPath, historial || []);
 }
 
-// --- VENTAS ---
+// Ventas
 function readVentas() {
   try {
     return readJson(ventasPath);
@@ -110,12 +90,11 @@ function readVentas() {
     return [];
   }
 }
-
 function writeVentas(ventas) {
   writeJson(ventasPath, ventas || []);
 }
 
-// --- PEDIDOS ---
+// Pedidos
 function readPedidos() {
   try {
     return readJson(pedidosPath);
@@ -124,12 +103,11 @@ function readPedidos() {
     return [];
   }
 }
-
 function writePedidos(pedidos) {
   writeJson(pedidosPath, pedidos || []);
 }
 
-// --- MODELOS / DISEÑOS ---
+// Modelos
 function readModelos() {
   try {
     return readJson(modelosPath);
@@ -138,12 +116,11 @@ function readModelos() {
     return [];
   }
 }
-
 function writeModelos(modelos) {
   writeJson(modelosPath, modelos || []);
 }
 
-// --- FERIAS (NUEVO) ---
+// Ferias
 function readFerias() {
   try {
     return readJson(feriasPath);
@@ -152,9 +129,21 @@ function readFerias() {
     return [];
   }
 }
-
 function writeFerias(ferias) {
   writeJson(feriasPath, ferias || []);
+}
+
+// Gastos
+function readGastos() {
+  try {
+    return readJson(gastosPath);
+  } catch (err) {
+    console.error("Error leyendo gastos.json, devolviendo []:", err.message);
+    return [];
+  }
+}
+function writeGastos(gastos) {
+  writeJson(gastosPath, gastos || []);
 }
 
 module.exports = {
@@ -176,7 +165,8 @@ module.exports = {
   writePedidos,
   readModelos,
   writeModelos,
-  // NUEVO
   readFerias,
   writeFerias,
+  readGastos,
+  writeGastos,
 };

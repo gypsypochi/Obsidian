@@ -82,6 +82,11 @@ export default function Nav() {
         Ferias
       </NavLink>
 
+      {/* 👉 NUEVO: link a Gastos */}
+      <NavLink to="/gastos" style={linkStyle}>
+        Gastos
+      </NavLink>
+
       <NavLink to="/pedidos" style={linkStyle}>
         {pedidosLabel}
       </NavLink>

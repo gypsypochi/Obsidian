@@ -417,3 +417,53 @@ export async function deleteFeria(id) {
   }
   return data;
 }
+
+// --- GASTOS (NUEVO) ---
+export async function getGastos() {
+  const res = await fetch(`${API_URL}/gastos`);
+  if (!res.ok) throw new Error("Error al cargar gastos");
+  return res.json();
+}
+
+export async function createGasto(gasto) {
+  const res = await fetch(`${API_URL}/gastos`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(gasto),
+  });
+
+  const data = await res.json().catch(() => null);
+  if (!res.ok) {
+    if (data && data.error) throw new Error(data.error);
+    throw new Error("Error al crear gasto");
+  }
+  return data;
+}
+
+export async function updateGasto(id, updates) {
+  const res = await fetch(`${API_URL}/gastos/${id}`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(updates),
+  });
+
+  const data = await res.json().catch(() => null);
+  if (!res.ok) {
+    if (data && data.error) throw new Error(data.error);
+    throw new Error("Error al actualizar gasto");
+  }
+  return data;
+}
+
+export async function deleteGasto(id) {
+  const res = await fetch(`${API_URL}/gastos/${id}`, {
+    method: "DELETE",
+  });
+
+  const data = await res.json().catch(() => null);
+  if (!res.ok) {
+    if (data && data.error) throw new Error(data.error);
+    throw new Error("Error al eliminar gasto");
+  }
+  return data;
+}

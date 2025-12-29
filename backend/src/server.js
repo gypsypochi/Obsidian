@@ -21,6 +21,9 @@ const modelosRoutes = require("./routes/modelos");
 // NUEVO: rutas de upload
 const uploadRoutes = require("./routes/upload");
 
+// NUEVO: gastos
+const gastosRoutes = require("./routes/gastos");
+
 const app = express();
 const PORT = process.env.PORT || 3001;
 
@@ -28,10 +31,7 @@ app.use(cors());
 app.use(express.json());
 
 // Servir archivos estáticos subidos (imagenes / pdf)
-app.use(
-  "/uploads",
-  express.static(path.join(__dirname, "../uploads"))
-);
+app.use("/uploads", express.static(path.join(__dirname, "../uploads")));
 
 // Health check
 app.get("/health", (req, res) => {
@@ -56,6 +56,9 @@ app.use("/modelos", modelosRoutes);
 
 // NUEVO: endpoint para subir archivos
 app.use("/upload", uploadRoutes);
+
+// NUEVO: gastos
+app.use("/gastos", gastosRoutes);
 
 app.listen(PORT, () => {
   console.log(`✅ Obsidian API running on http://localhost:${PORT}`);
