@@ -1,10 +1,18 @@
 // frontend/src/pages/ventas.jsx
 import { useEffect, useMemo, useState } from "react";
-import { getProductos, getVentas, createVenta } from "../api";
+import { getProductos, getVentas, createVenta, getFerias } from "../api";
+
+const OPCIONES_CANAL = [
+  { value: "feria", label: "Feria" },
+  { value: "online", label: "Online" },
+  { value: "presencial", label: "Presencial / directo" },
+];
 
 export default function Ventas() {
   const [productos, setProductos] = useState([]);
   const [ventas, setVentas] = useState([]);
+  const [ferias, setFerias] = useState([]);
+
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [mensaje, setMensaje] = useState("");
@@ -13,22 +21,33 @@ export default function Ventas() {
   const [cantidad, setCantidad] = useState(1);
   const [precioUnitario, setPrecioUnitario] = useState("");
 
-  // 🔹 NUEVO: datos de canal / origen
-  const [origen, setOrigen] = useState("feria"); // feria / online / directo
-  const [subCanal, setSubCanal] = useState(""); // p/ online: Instagram, WhatsApp...
-  const [feriaNombre, setFeriaNombre] = useState(""); // nombre libre de la feria
-  const [notasCanal, setNotasCanal] = useState("");
+  // Canal de venta
+  const [canal, setCanal] = useState("feria");
+  const [feriaId, setFeriaId] = useState("");
+  const [origen, setOrigen] = useState("");
+
+  // 🔹 NUEVO: detalle del modelo / diseño vendido
+  const [detalleModelo, setDetalleModelo] = useState("");
 
   async function load() {
     try {
       setError("");
       setLoading(true);
-      const [prodData, ventasData] = await Promise.all([
+      const [prodData, ventasData, feriasData] = await Promise.all([
         getProductos(),
         getVentas(),
+        getFerias(),
       ]);
+
       setProductos(prodData);
       setVentas(ventasData);
+
+      const feriasOrdenadas = [...feriasData].sort((a, b) => {
+        const fa = new Date(a.fecha).getTime();
+        const fb = new Date(b.fecha).getTime();
+        return fb - fa;
+      });
+      setFerias(feriasOrdenadas);
     } catch (e) {
       setError(e.message || "Error cargando datos de ventas");
     } finally {
@@ -40,7 +59,6 @@ export default function Ventas() {
     load();
   }, []);
 
-  // Cuando cambia el producto, inicializamos el precio con el precio del producto
   useEffect(() => {
     if (!productoId) {
       setPrecioUnitario("");
@@ -54,15 +72,19 @@ export default function Ventas() {
 
   const ventasEnriquecidas = useMemo(() => {
     const mapaProductos = new Map(productos.map((p) => [p.id, p]));
+    const mapaFerias = new Map(ferias.map((f) => [f.id, f]));
+
     const lista = ventas.map((v) => {
       const prod = mapaProductos.get(v.productoId);
+      const feria = v.feriaId ? mapaFerias.get(v.feriaId) : null;
+
       return {
         ...v,
         nombreProducto: prod ? prod.nombre : v.productoId,
+        nombreFeria: feria ? feria.nombre : v.feriaId || null,
       };
     });
 
-    // más recientes primero
     lista.sort((a, b) => {
       const fa = new Date(a.fecha).getTime();
       const fb = new Date(b.fecha).getTime();
@@ -70,7 +92,16 @@ export default function Ventas() {
     });
 
     return lista;
-  }, [ventas, productos]);
+  }, [ventas, productos, ferias]);
+
+  function formatFecha(fechaStr) {
+    const d = new Date(fechaStr);
+    if (Number.isNaN(d.getTime())) return fechaStr;
+    return d.toLocaleString("es-AR", {
+      dateStyle: "short",
+      timeStyle: "short",
+    });
+  }
 
   async function onSubmit(e) {
     e.preventDefault();
@@ -94,14 +125,19 @@ export default function Ventas() {
       return;
     }
 
+    if (canal === "feria" && !feriaId) {
+      setError("Elegí la feria en la que estás vendiendo");
+      return;
+    }
+
     const ventaPayload = {
       productoId,
       cantidad: cantNum,
       precioUnitario: precioNum,
-      origen, // feria / online / directo
-      subCanal: origen === "online" ? subCanal : "",
-      feriaNombre: origen === "feria" ? feriaNombre : "",
-      notasCanal,
+      canal,
+      feriaId: canal === "feria" ? feriaId : null,
+      origen: origen || null,
+      detalleModelo: detalleModelo || null, // 🔹 NUEVO
     };
 
     try {
@@ -115,12 +151,7 @@ export default function Ventas() {
       );
 
       setCantidad(1);
-      // dejamos el precio igual por si vendés más al mismo precio
-      // Reseteamos datos de canal pero no origen (así podés cargar varias seguidas del mismo tipo)
-      setSubCanal("");
-      setFeriaNombre("");
-      setNotasCanal("");
-
+      // dejamos precio, canal, feria y detalle para cargar varias seguidas
       await load();
     } catch (e) {
       setError(e.message || "Error registrando venta");
@@ -177,61 +208,90 @@ export default function Ventas() {
           </p>
         </div>
 
-        {/* 🔹 NUEVO: Canal / origen de la venta */}
+        {/* 🔹 NUEVO: Detalle del modelo/diseño vendido */}
+        <div>
+          <label>Detalle modelo / diseño</label>
+          <input
+            type="text"
+            value={detalleModelo}
+            onChange={(e) => setDetalleModelo(e.target.value)}
+            placeholder="Ej: HP - Modelo 2 tapa dura, Imán anime plancha 3..."
+          />
+          <p style={{ fontSize: 12 }}>
+            Útil para cuadernos, imanes, pines, etc. Para planchas de stickers
+            podés dejarlo vacío si es un mix.
+          </p>
+        </div>
+
+        {/* CANAL DE VENTA */}
         <fieldset
           style={{
             marginTop: 12,
-            border: "1px solid #ccc",
             padding: 8,
+            border: "1px solid #e5e7eb",
           }}
         >
-          <legend>Canal / origen</legend>
+          <legend style={{ fontSize: 13 }}>Canal de venta</legend>
 
           <div>
-            <label>Origen *</label>
+            <label>Canal *</label>
             <select
-              value={origen}
-              onChange={(e) => setOrigen(e.target.value)}
+              value={canal}
+              onChange={(e) => {
+                setCanal(e.target.value);
+                if (e.target.value !== "feria") {
+                  setFeriaId("");
+                }
+              }}
+              style={{ marginLeft: 4 }}
             >
-              <option value="feria">Feria / evento</option>
-              <option value="online">Online</option>
-              <option value="directo">Directo / conocidos</option>
+              {OPCIONES_CANAL.map((c) => (
+                <option key={c.value} value={c.value}>
+                  {c.label}
+                </option>
+              ))}
             </select>
           </div>
 
-          {origen === "feria" && (
-            <div>
-              <label>Nombre de la feria</label>
-              <input
-                type="text"
-                value={feriaNombre}
-                onChange={(e) => setFeriaNombre(e.target.value)}
-                placeholder="Ej: Pixel Market, Mercat, Random..."
-              />
+          {canal === "feria" && (
+            <div style={{ marginTop: 8 }}>
+              <label>Feria</label>
+              <select
+                value={feriaId}
+                onChange={(e) => setFeriaId(e.target.value)}
+                style={{ marginLeft: 4 }}
+              >
+                <option value="">-- elegir feria --</option>
+                {ferias.map((f) => (
+                  <option key={f.id} value={f.id}>
+                    {f.nombre} –{" "}
+                    {new Date(f.fecha).toLocaleDateString("es-AR")} (
+                    {f.estado})
+                  </option>
+                ))}
+              </select>
+              <p style={{ fontSize: 11 }}>
+                Así enganchás todas las ventas de esa feria.
+              </p>
             </div>
           )}
 
-          {origen === "online" && (
-            <div>
-              <label>Subcanal online</label>
+          {canal !== "feria" && (
+            <div style={{ marginTop: 8 }}>
+              <label>Origen / detalle</label>
               <input
                 type="text"
-                value={subCanal}
-                onChange={(e) => setSubCanal(e.target.value)}
-                placeholder="Ej: Instagram, WhatsApp, TiendaNube..."
+                value={origen}
+                onChange={(e) => setOrigen(e.target.value)}
+                placeholder={
+                  canal === "online"
+                    ? "Instagram, TikTok, tienda online..."
+                    : "Conocido, pedido directo, etc."
+                }
+                style={{ marginLeft: 4 }}
               />
             </div>
           )}
-
-          <div>
-            <label>Notas del canal</label>
-            <input
-              type="text"
-              value={notasCanal}
-              onChange={(e) => setNotasCanal(e.target.value)}
-              placeholder="Promo 2x1, venta a conocido, etc."
-            />
-          </div>
         </fieldset>
 
         <button type="submit" style={{ marginTop: 8 }}>
@@ -248,37 +308,31 @@ export default function Ventas() {
             <th>Cantidad</th>
             <th>Precio unitario</th>
             <th>Monto total</th>
-            <th>Origen</th>         {/* 🔹 NUEVO */}
-            <th>Detalle canal</th>  {/* 🔹 NUEVO */}
+            <th>Modelo / diseño</th> {/* 🔹 NUEVA COLUMNA */}
+            <th>Canal / Feria</th>
           </tr>
         </thead>
         <tbody>
           {ventasEnriquecidas.map((v) => {
-            const origenMostrar = v.origen || "-";
+            let canalTexto = "-";
 
-            let detalleCanal = "-";
-            if (v.origen === "feria" && v.feriaNombre) {
-              detalleCanal = v.feriaNombre;
-            } else if (v.origen === "online" && v.subCanal) {
-              detalleCanal = v.subCanal;
-            } else if (v.notasCanal) {
-              detalleCanal = v.notasCanal;
+            if (v.canal === "feria") {
+              canalTexto = `Feria: ${v.nombreFeria || "–"}`;
+            } else if (v.canal === "online") {
+              canalTexto = `Online${v.origen ? " – " + v.origen : ""}`;
+            } else if (v.canal === "presencial") {
+              canalTexto = `Presencial${v.origen ? " – " + v.origen : ""}`;
             }
 
             return (
               <tr key={v.id}>
-                <td>
-                  {new Date(v.fecha).toLocaleString("es-AR", {
-                    dateStyle: "short",
-                    timeStyle: "short",
-                  })}
-                </td>
+                <td>{formatFecha(v.fecha)}</td>
                 <td>{v.nombreProducto}</td>
                 <td>{v.cantidad}</td>
                 <td>{v.precioUnitario}</td>
                 <td>{v.montoTotal}</td>
-                <td>{origenMostrar}</td>
-                <td>{detalleCanal}</td>
+                <td>{v.detalleModelo || "-"}</td>
+                <td>{canalTexto}</td>
               </tr>
             );
           })}

@@ -15,6 +15,9 @@ const pedidosRoutes = require("./routes/pedidos");
 // NUEVO: ferias
 const feriasRoutes = require("./routes/ferias");
 
+// NUEVO: modelos
+const modelosRoutes = require("./routes/modelos");
+
 // NUEVO: rutas de upload
 const uploadRoutes = require("./routes/upload");
 
@@ -47,6 +50,9 @@ app.use("/pedidos", pedidosRoutes);
 
 // NUEVO: ferias
 app.use("/ferias", feriasRoutes);
+
+// NUEVO: modelos
+app.use("/modelos", modelosRoutes);
 
 // NUEVO: endpoint para subir archivos
 app.use("/upload", uploadRoutes);

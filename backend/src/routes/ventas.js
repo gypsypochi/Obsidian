@@ -29,10 +29,10 @@ router.post("/", (req, res) => {
       productoId,
       cantidad,
       precioUnitario,
-      origen,       // 🔹 NUEVO
-      subCanal,     // 🔹 NUEVO (para online)
-      feriaNombre,  // 🔹 NUEVO (nombre libre de la feria)
-      notasCanal,   // 🔹 NUEVO (comentarios del canal)
+      canal,          // feria / online / presencial (opcional)
+      feriaId,        // id de feria si canal === "feria"
+      origen,         // texto libre (Instagram, conocido, etc.)
+      detalleModelo,  // 🔹 NUEVO: qué modelo/diseño vendiste (texto)
     } = req.body;
 
     if (!productoId) {
@@ -66,7 +66,6 @@ router.post("/", (req, res) => {
     }
 
     // Determinar precioUnitario a usar:
-    // si viene en el body, lo usamos; si no, usamos el precio del producto.
     let precioUnitarioNum;
     if (precioUnitario !== undefined && precioUnitario !== null) {
       precioUnitarioNum = Number(precioUnitario);
@@ -84,20 +83,6 @@ router.post("/", (req, res) => {
     const stockAntes = stockActual;
     const stockDespues = stockAntes - cantNum;
 
-    // Normalizar canal / origen (para futuro ferias / online)
-    const origenRaw = (origen || "").toString().trim().toLowerCase();
-    let origenFinal = "directo"; // por defecto
-    if (["feria", "online", "directo"].includes(origenRaw)) {
-      origenFinal = origenRaw;
-    } else if (origenRaw) {
-      // si vino algo raro, lo guardamos igual
-      origenFinal = origenRaw;
-    }
-
-    const subCanalFinal = (subCanal || "").toString().trim() || null;
-    const feriaNombreFinal = (feriaNombre || "").toString().trim() || null;
-    const notasCanalFinal = (notasCanal || "").toString().trim();
-
     // Actualizar stock del producto
     productos[productoIndex].stock = stockDespues;
     writeProductos(productos);
@@ -110,11 +95,15 @@ router.post("/", (req, res) => {
       cantidad: cantNum,
       precioUnitario: precioUnitarioNum,
       montoTotal,
-      origen: origenFinal,          // 🔹 NUEVO
-      subCanal: subCanalFinal,      // 🔹 NUEVO
-      feriaNombre: feriaNombreFinal,// 🔹 NUEVO
-      notasCanal: notasCanalFinal,  // 🔹 NUEVO
       fecha: new Date().toISOString(),
+
+      // campos de canal
+      canal: canal || null, // "feria" | "online" | "presencial" | null
+      feriaId: canal === "feria" && feriaId ? feriaId : null,
+      origen: origen || null,
+
+      // 🔹 NUEVO: detalle del modelo / diseño
+      detalleModelo: detalleModelo || null,
     };
     ventas.push(nuevaVenta);
     writeVentas(ventas);
