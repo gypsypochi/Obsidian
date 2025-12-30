@@ -10,24 +10,21 @@ router.get("/", (req, res) => {
 
 // POST /materiales
 router.post("/", (req, res) => {
-  const { nombre, categoria, stock, unidad } = req.body;
+  const { nombre, categoria, unidad } = req.body;
 
-  if (!nombre || nombre.trim() === "") {
+  if (!nombre || String(nombre).trim() === "") {
     return res.status(400).json({ error: "El nombre es obligatorio" });
-  }
-
-  if (stock !== undefined && typeof stock !== "number") {
-    return res.status(400).json({ error: "Stock debe ser numérico" });
   }
 
   const materiales = readMaterials();
 
   const nuevoMaterial = {
     id: `mat-${Date.now()}`,
-    nombre: nombre.trim(),
+    nombre: String(nombre).trim(),
     categoria: categoria ? String(categoria).trim() : "",
-    stock: stock ?? 0,
-    unidad: unidad ? String(unidad).trim() : ""
+    // 🔹 stock ya NO viene del front: arranca en 0 y se maneja solo
+    stock: 0,
+    unidad: unidad ? String(unidad).trim() : "",
   };
 
   materiales.push(nuevoMaterial);
@@ -39,7 +36,7 @@ router.post("/", (req, res) => {
 // PUT /materiales/:id  (editar)
 router.put("/:id", (req, res) => {
   const { id } = req.params;
-  const { nombre, categoria, stock, unidad } = req.body;
+  const { nombre, categoria, unidad } = req.body;
 
   const materiales = readMaterials();
   const index = materiales.findIndex((m) => m.id === id);
@@ -48,24 +45,24 @@ router.put("/:id", (req, res) => {
     return res.status(404).json({ error: "Material no encontrado" });
   }
 
-  // Validaciones mínimas (si viene nombre, no puede venir vacío)
   if (nombre !== undefined && String(nombre).trim() === "") {
     return res.status(400).json({ error: "El nombre no puede ser vacío" });
-  }
-
-  if (stock !== undefined && typeof stock !== "number") {
-    return res.status(400).json({ error: "Stock debe ser numérico" });
   }
 
   const materialActual = materiales[index];
 
   const materialActualizado = {
     ...materialActual,
-    nombre: nombre !== undefined ? String(nombre).trim() : materialActual.nombre,
+    nombre:
+      nombre !== undefined ? String(nombre).trim() : materialActual.nombre,
     categoria:
-      categoria !== undefined ? String(categoria).trim() : materialActual.categoria,
-    stock: stock !== undefined ? stock : materialActual.stock,
-    unidad: unidad !== undefined ? String(unidad).trim() : materialActual.unidad
+      categoria !== undefined
+        ? String(categoria).trim()
+        : materialActual.categoria,
+    // 🔹 stock NO se edita desde acá
+    stock: materialActual.stock,
+    unidad:
+      unidad !== undefined ? String(unidad).trim() : materialActual.unidad,
   };
 
   materiales[index] = materialActualizado;

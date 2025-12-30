@@ -11,23 +11,21 @@ export default function Materiales() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  // Alta
+  // Alta (sin stock, solo nombre / categoría / unidad)
   const [form, setForm] = useState({
     nombre: "",
     categoria: "",
-    stock: 0,
     unidad: "",
   });
 
   // Filtro
   const [q, setQ] = useState("");
 
-  // Edición
+  // Edición (sin stock)
   const [editId, setEditId] = useState(null);
   const [editForm, setEditForm] = useState({
     nombre: "",
     categoria: "",
-    stock: 0,
     unidad: "",
   });
 
@@ -52,7 +50,7 @@ export default function Materiales() {
     const { name, value } = e.target;
     setForm((prev) => ({
       ...prev,
-      [name]: name === "stock" ? Number(value) : value,
+      [name]: value,
     }));
   }
 
@@ -60,8 +58,9 @@ export default function Materiales() {
     e.preventDefault();
     try {
       setError("");
+      // 🔹 No enviamos stock, el backend lo inicializa en 0
       await createMaterial(form);
-      setForm({ nombre: "", categoria: "", stock: 0, unidad: "" });
+      setForm({ nombre: "", categoria: "", unidad: "" });
       await load();
     } catch (e) {
       setError(e.message || "Error creando material");
@@ -73,27 +72,27 @@ export default function Materiales() {
     setEditForm({
       nombre: m.nombre || "",
       categoria: m.categoria || "",
-      stock: Number(m.stock || 0),
       unidad: m.unidad || "",
     });
   }
 
   function cancelEdit() {
     setEditId(null);
-    setEditForm({ nombre: "", categoria: "", stock: 0, unidad: "" });
+    setEditForm({ nombre: "", categoria: "", unidad: "" });
   }
 
   function onEditChange(e) {
     const { name, value } = e.target;
     setEditForm((prev) => ({
       ...prev,
-      [name]: name === "stock" ? Number(value) : value,
+      [name]: value,
     }));
   }
 
   async function saveEdit() {
     try {
       setError("");
+      // 🔹 Tampoco mandamos stock en la edición, solo los datos básicos
       await updateMaterial(editId, editForm);
       cancelEdit();
       await load();
@@ -128,7 +127,7 @@ export default function Materiales() {
       <h1>Materiales</h1>
 
       {loading && <p>Cargando...</p>}
-      {error && <p>{error}</p>}
+      {error && <p style={{ color: "red" }}>{error}</p>}
 
       <h2>Alta</h2>
       <form onSubmit={onSubmit}>
@@ -154,22 +153,12 @@ export default function Materiales() {
         </div>
 
         <div>
-          <label>Stock</label>
-          <input
-            name="stock"
-            type="number"
-            value={form.stock}
-            onChange={onChange}
-          />
-        </div>
-
-        <div>
           <label>Unidad</label>
           <input
             name="unidad"
             value={form.unidad}
             onChange={onChange}
-            placeholder="Ej: planchas"
+            placeholder="Ej: planchas, metros, ml..."
           />
         </div>
 
@@ -195,8 +184,8 @@ export default function Materiales() {
           <tr>
             <th>Nombre</th>
             <th>Categoría</th>
-            <th>Stock</th>
             <th>Unidad</th>
+            <th>Stock</th> {/* 🔹 Solo lectura */}
             <th>Acciones</th>
           </tr>
         </thead>
@@ -235,19 +224,6 @@ export default function Materiales() {
                 <td>
                   {isEditing ? (
                     <input
-                      name="stock"
-                      type="number"
-                      value={editForm.stock}
-                      onChange={onEditChange}
-                    />
-                  ) : (
-                    m.stock
-                  )}
-                </td>
-
-                <td>
-                  {isEditing ? (
-                    <input
                       name="unidad"
                       value={editForm.unidad}
                       onChange={onEditChange}
@@ -256,6 +232,9 @@ export default function Materiales() {
                     m.unidad
                   )}
                 </td>
+
+                {/* Stock solo lectura: viene del backend (producción/gastos) */}
+                <td>{m.stock}</td>
 
                 <td>
                   {!isEditing ? (

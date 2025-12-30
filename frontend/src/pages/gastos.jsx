@@ -43,13 +43,14 @@ export default function Gastos() {
   const [proveedorId, setProveedorId] = useState("");
   const [feriaId, setFeriaId] = useState("");
   const [materialId, setMaterialId] = useState("");
+  const [cantidadMaterial, setCantidadMaterial] = useState(""); // 🔹 NUEVO
   const [notas, setNotas] = useState("");
 
   // Edición
   const [editId, setEditId] = useState(null);
 
   // Filtro del historial
-  const [filtroTipo, setFiltroTipo] = useState("todos"); // todos | materiales | feria | otro
+  const [filtroTipo, setFiltroTipo] = useState("todos");
 
   async function load() {
     try {
@@ -143,6 +144,7 @@ export default function Gastos() {
     setProveedorId("");
     setFeriaId("");
     setMaterialId("");
+    setCantidadMaterial(""); // 🔹 reset
     setNotas("");
     setEditId(null);
   }
@@ -158,10 +160,16 @@ export default function Gastos() {
       return;
     }
 
-    // Validaciones por tipo
     if (tipo === "materiales") {
       if (!materialId) {
         setError("Tenés que elegir el material al que corresponde el gasto");
+        return;
+      }
+      const cantMatNum = Number(cantidadMaterial);
+      if (Number.isNaN(cantMatNum) || cantMatNum <= 0) {
+        setError(
+          "Indicá la cantidad comprada de ese material (número mayor a 0)"
+        );
         return;
       }
     } else if (tipo === "feria") {
@@ -178,7 +186,6 @@ export default function Gastos() {
 
     const payload = {
       tipo,
-      // solo usamos categoría/descripcion manual en "otro"
       categoria: tipo === "otro" ? categoria || null : null,
       descripcion: tipo === "otro" ? descripcion.trim() : "",
       monto: montoNum,
@@ -187,6 +194,9 @@ export default function Gastos() {
       feriaId: tipo === "feria" ? feriaId || null : null,
       materialId: tipo === "materiales" ? materialId || null : null,
       notas: notas || "",
+      // 🔹 Solo enviamos cantidadMaterial para tipo "materiales"
+      cantidadMaterial:
+        tipo === "materiales" ? Number(cantidadMaterial) : undefined,
     };
 
     try {
@@ -215,6 +225,9 @@ export default function Gastos() {
     setProveedorId(g.proveedorId || "");
     setFeriaId(g.feriaId || "");
     setMaterialId(g.materialId || "");
+    setCantidadMaterial(
+      g.cantidadMaterial != null ? String(g.cantidadMaterial) : ""
+    );
     setNotas(g.notas || "");
     setMensaje("");
     setError("");
@@ -303,6 +316,7 @@ export default function Gastos() {
               }
               if (nuevoTipo !== "materiales") {
                 setMaterialId("");
+                setCantidadMaterial("");
               }
             }}
           >
@@ -316,23 +330,37 @@ export default function Gastos() {
 
         {/* MATERIAL (solo si tipo = materiales) */}
         {tipo === "materiales" && (
-          <div>
-            <label>Material *</label>
-            <select
-              value={materialId}
-              onChange={(e) => setMaterialId(e.target.value)}
-            >
-              <option value="">-- elegir material --</option>
-              {materiales.map((m) => (
-                <option key={m.id} value={m.id}>
-                  {m.nombre || m.id}
-                </option>
-              ))}
-            </select>
-          </div>
+          <>
+            <div>
+              <label>Material *</label>
+              <select
+                value={materialId}
+                onChange={(e) => setMaterialId(e.target.value)}
+              >
+                <option value="">-- elegir material --</option>
+                {materiales.map((m) => (
+                  <option key={m.id} value={m.id}>
+                    {m.nombre || m.id}{" "}
+                    {m.stock !== undefined ? ` (stock: ${m.stock})` : ""}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <label>Cantidad comprada (para sumar al stock) *</label>
+              <input
+                type="number"
+                min="1"
+                value={cantidadMaterial}
+                onChange={(e) => setCantidadMaterial(e.target.value)}
+                placeholder="Ej: 100, 50, 3..."
+              />
+            </div>
+          </>
         )}
 
-        {/* FERIA (solo si tipo = feria) */}
+        {/* FERIA */}
         {tipo === "feria" && (
           <div>
             <label>Feria *</label>
@@ -351,7 +379,7 @@ export default function Gastos() {
           </div>
         )}
 
-        {/* CAMPOS SOLO PARA "OTRO" */}
+        {/* SOLO PARA "OTRO" */}
         {tipo === "otro" && (
           <>
             <div>
@@ -360,7 +388,7 @@ export default function Gastos() {
                 type="text"
                 value={categoria}
                 onChange={(e) => setCategoria(e.target.value)}
-                placeholder="Ej: software, transporte, herramientas..."
+                placeholder="Ej: software, transporte..."
               />
             </div>
 
@@ -403,7 +431,7 @@ export default function Gastos() {
           </select>
         </div>
 
-        {/* PROVEEDOR (opcional, pero siempre disponible) */}
+        {/* PROVEEDOR */}
         <div>
           <label>Proveedor</label>
           <select
@@ -469,7 +497,6 @@ export default function Gastos() {
         )}
       </div>
 
-      {/* FILTROS */}
       {renderFiltros()}
 
       <h2 style={{ marginTop: 8 }}>Historial de gastos</h2>

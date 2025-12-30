@@ -6,6 +6,7 @@ const {
   readGastos,
   writeGastos,
   readMaterials,
+  writeMaterials,   // 🔹 NUEVO
   readFerias,
 } = require("../utils/fileDB");
 
@@ -28,13 +29,7 @@ function generarNuevoId(gastos) {
 }
 
 function completarDesdeMaterialYFeria(opts) {
-  const {
-    tipo,
-    materialId,
-    feriaId,
-    descripcion,
-    categoria,
-  } = opts;
+  const { tipo, materialId, feriaId, descripcion, categoria } = opts;
 
   let descFinal = descripcion ? descripcion.trim() : "";
   let catFinal = categoria || null;
@@ -101,6 +96,7 @@ router.post("/", (req, res) => {
       feriaId,
       materialId,
       notas,
+      cantidadMaterial, // 🔹 NUEVO: cantidad comprada para sumar al stock
     } = body;
 
     const tipo = tipoRaw || "otro";
@@ -112,10 +108,34 @@ router.post("/", (req, res) => {
         .json({ error: "El monto debe ser un número mayor a 0" });
     }
 
+    // 🔹 Validación específica para tipo "materiales"
+    let cantidadMaterialNum = 0;
+    if (tipo === "materiales") {
+      if (!materialId) {
+        return res.status(400).json({
+          error: "Para gastos de materiales tenés que elegir el material",
+        });
+      }
+
+      if (cantidadMaterial === undefined || cantidadMaterial === null) {
+        return res.status(400).json({
+          error:
+            "Para gastos de materiales tenés que indicar la cantidad comprada (cantidadMaterial)",
+        });
+      }
+
+      cantidadMaterialNum = Number(cantidadMaterial);
+      if (Number.isNaN(cantidadMaterialNum) || cantidadMaterialNum <= 0) {
+        return res.status(400).json({
+          error:
+            "cantidadMaterial debe ser un número mayor a 0 para gastos de materiales",
+        });
+      }
+    }
+
     let descManual = descripcion || "";
     let catManual = categoria || null;
 
-    // Autocompletar según tipo/material/feria
     const { descFinal, catFinal } = completarDesdeMaterialYFeria({
       tipo,
       materialId,
@@ -147,16 +167,39 @@ router.post("/", (req, res) => {
       categoria: categoriaGasto,
       descripcion: descripcionGasto.trim(),
       monto: montoNum,
-      moneda: "ARS", // fija
+      moneda: "ARS",
       medioPago: medioPago || "efectivo",
       proveedorId: proveedorId || null,
       feriaId: tipo === "feria" ? feriaId || null : null,
       materialId: tipo === "materiales" ? materialId || null : null,
       notas: notas || "",
+      // guardamos también la cantidad ligada a este gasto (por si la querés ver en el futuro)
+      cantidadMaterial:
+        tipo === "materiales" && cantidadMaterialNum > 0
+          ? cantidadMaterialNum
+          : null,
     };
 
     const actualizados = [...gastos, nuevo];
     writeGastos(actualizados);
+
+    // 🔹 Actualizar stock del material si corresponde
+    if (tipo === "materiales" && materialId && cantidadMaterialNum > 0) {
+      try {
+        const materiales = readMaterials();
+        const idxMat = materiales.findIndex((m) => m.id === materialId);
+        if (idxMat !== -1) {
+          const actual = Number(materiales[idxMat].stock || 0);
+          materiales[idxMat].stock = actual + cantidadMaterialNum;
+          writeMaterials(materiales);
+        }
+      } catch (err) {
+        console.error(
+          "Error actualizando stock de material desde gasto:",
+          err.message
+        );
+      }
+    }
 
     res.status(201).json({ gasto: nuevo });
   } catch (err) {
@@ -180,7 +223,6 @@ router.put("/:id", (req, res) => {
 
     const original = gastos[idx];
 
-    // Validaciones de monto
     if (body.monto !== undefined) {
       const m = Number(body.monto);
       if (Number.isNaN(m) || m <= 0) {
@@ -190,7 +232,6 @@ router.put("/:id", (req, res) => {
       }
     }
 
-    // Mezclamos original + body
     let merged = {
       ...original,
       ...body,
@@ -198,7 +239,6 @@ router.put("/:id", (req, res) => {
 
     const tipoFinal = merged.tipo || "otro";
 
-    // Autocompletar de nuevo si corresponde
     const { descFinal, catFinal } = completarDesdeMaterialYFeria({
       tipo: tipoFinal,
       materialId: merged.materialId,
@@ -218,8 +258,12 @@ router.put("/:id", (req, res) => {
       }
     }
 
-    // aseguramos moneda fija ARS
     merged.moneda = "ARS";
+
+    // 🔹 IMPORTANTE:
+    // Por simplicidad, la edición NO vuelve a tocar el stock de materiales.
+    // Si cambiaste cantidad/material en un gasto viejo, el stock no se recalcula.
+    // (Si un día querés, hacemos una sub-etapa para eso.)
 
     gastos[idx] = merged;
     writeGastos(gastos);
@@ -244,6 +288,9 @@ router.delete("/:id", (req, res) => {
 
     const [eliminado] = gastos.splice(idx, 1);
     writeGastos(gastos);
+
+    // Igual que en PUT: por ahora, eliminar un gasto NO toca stock de materiales.
+    // (Sería otra mini-etapa si quisieras que al borrar también se descuente stock.)
 
     res.json({ ok: true, eliminado });
   } catch (err) {
