@@ -16,7 +16,6 @@ export default function Productos() {
     nombre: "",
     categoria: "",
     precio: 0,
-    stock: 0,
     unidad: "",
     proveedorId: "",
   });
@@ -30,7 +29,6 @@ export default function Productos() {
     nombre: "",
     categoria: "",
     precio: 0,
-    stock: 0,
     unidad: "",
     proveedorId: "",
   });
@@ -56,8 +54,7 @@ export default function Productos() {
     const { name, value } = e.target;
     setForm((prev) => ({
       ...prev,
-      [name]:
-        name === "stock" || name === "precio" ? Number(value) : value,
+      [name]: name === "precio" ? Number(value) : value,
     }));
   }
 
@@ -70,7 +67,6 @@ export default function Productos() {
         nombre: "",
         categoria: "",
         precio: 0,
-        stock: 0,
         unidad: "",
         proveedorId: "",
       });
@@ -86,7 +82,6 @@ export default function Productos() {
       nombre: p.nombre || "",
       categoria: p.categoria || "",
       precio: Number(p.precio || 0),
-      stock: Number(p.stock || 0),
       unidad: p.unidad || "",
       proveedorId: p.proveedorId || "",
     });
@@ -98,7 +93,6 @@ export default function Productos() {
       nombre: "",
       categoria: "",
       precio: 0,
-      stock: 0,
       unidad: "",
       proveedorId: "",
     });
@@ -108,8 +102,7 @@ export default function Productos() {
     const { name, value } = e.target;
     setEditForm((prev) => ({
       ...prev,
-      [name]:
-        name === "stock" || name === "precio" ? Number(value) : value,
+      [name]: name === "precio" ? Number(value) : value,
     }));
   }
 
@@ -160,7 +153,7 @@ export default function Productos() {
             name="nombre"
             value={form.nombre}
             onChange={onChange}
-            placeholder="Ej: Sticker pack 10u"
+            placeholder="Ej: Sticker 5cm, Cuaderno A5..."
             required
           />
         </div>
@@ -171,7 +164,7 @@ export default function Productos() {
             name="categoria"
             value={form.categoria}
             onChange={onChange}
-            placeholder="Ej: stickers"
+            placeholder="Ej: stickers, cuadernos, imanes..."
           />
         </div>
 
@@ -186,32 +179,22 @@ export default function Productos() {
         </div>
 
         <div>
-          <label>Stock</label>
-          <input
-            name="stock"
-            type="number"
-            value={form.stock}
-            onChange={onChange}
-          />
-        </div>
-
-        <div>
           <label>Unidad</label>
           <input
             name="unidad"
             value={form.unidad}
             onChange={onChange}
-            placeholder="Ej: u / packs"
+            placeholder="Ej: unidad, pack, caja..."
           />
         </div>
 
         <div>
-          <label>ProveedorId (opcional)</label>
+          <label>Origen / proveedor (texto libre)</label>
           <input
             name="proveedorId"
             value={form.proveedorId}
             onChange={onChange}
-            placeholder="Ej: prov-..."
+            placeholder="Ej: Yo, Shein, Librería X..."
           />
         </div>
 
@@ -238,9 +221,9 @@ export default function Productos() {
             <th>Nombre</th>
             <th>Categoría</th>
             <th>Precio</th>
-            <th>Stock</th>
+            <th>Stock (solo lectura)</th>
             <th>Unidad</th>
-            <th>ProveedorId</th>
+            <th>Origen / proveedor</th>
             <th>Acciones</th>
           </tr>
         </thead>
@@ -289,18 +272,8 @@ export default function Productos() {
                   )}
                 </td>
 
-                <td>
-                  {isEditing ? (
-                    <input
-                      name="stock"
-                      type="number"
-                      value={editForm.stock}
-                      onChange={onEditChange}
-                    />
-                  ) : (
-                    p.stock
-                  )}
-                </td>
+                {/* 🔹 Stock: solo lectura, ya NO se edita desde acá */}
+                <td>{p.stock}</td>
 
                 <td>
                   {isEditing ? (

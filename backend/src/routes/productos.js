@@ -10,14 +10,10 @@ router.get("/", (req, res) => {
 
 // POST /productos
 router.post("/", (req, res) => {
-  const { nombre, categoria, precio, stock, unidad, proveedorId } = req.body;
+  const { nombre, categoria, precio, unidad, proveedorId } = req.body;
 
   if (!nombre || String(nombre).trim() === "") {
     return res.status(400).json({ error: "El nombre es obligatorio" });
-  }
-
-  if (stock !== undefined && typeof stock !== "number") {
-    return res.status(400).json({ error: "Stock debe ser numérico" });
   }
 
   if (precio !== undefined && typeof precio !== "number") {
@@ -31,9 +27,11 @@ router.post("/", (req, res) => {
     nombre: String(nombre).trim(),
     categoria: categoria ? String(categoria).trim() : "",
     precio: precio ?? 0,
-    stock: stock ?? 0,
+    // 🔹 stock ya NO viene del front: siempre arranca en 0 y lo maneja producción/ventas
+    stock: 0,
     unidad: unidad ? String(unidad).trim() : "",
-    proveedorId: proveedorId ? String(proveedorId).trim() : ""
+    // lo usamos como "origen / proveedor" en texto libre
+    proveedorId: proveedorId ? String(proveedorId).trim() : "",
   };
 
   productos.push(nuevoProducto);
@@ -45,7 +43,7 @@ router.post("/", (req, res) => {
 // PUT /productos/:id
 router.put("/:id", (req, res) => {
   const { id } = req.params;
-  const { nombre, categoria, precio, stock, unidad, proveedorId } = req.body;
+  const { nombre, categoria, precio, unidad, proveedorId } = req.body;
 
   const productos = readProductos();
   const index = productos.findIndex((p) => p.id === id);
@@ -58,10 +56,6 @@ router.put("/:id", (req, res) => {
     return res.status(400).json({ error: "El nombre no puede ser vacío" });
   }
 
-  if (stock !== undefined && typeof stock !== "number") {
-    return res.status(400).json({ error: "Stock debe ser numérico" });
-  }
-
   if (precio !== undefined && typeof precio !== "number") {
     return res.status(400).json({ error: "Precio debe ser numérico" });
   }
@@ -71,9 +65,11 @@ router.put("/:id", (req, res) => {
   const actualizado = {
     ...actual,
     nombre: nombre !== undefined ? String(nombre).trim() : actual.nombre,
-    categoria: categoria !== undefined ? String(categoria).trim() : actual.categoria,
+    categoria:
+      categoria !== undefined ? String(categoria).trim() : actual.categoria,
     precio: precio !== undefined ? precio : actual.precio,
-    stock: stock !== undefined ? stock : actual.stock,
+    // 🔹 stock NO se edita desde acá, se mantiene el existente
+    stock: actual.stock,
     unidad: unidad !== undefined ? String(unidad).trim() : actual.unidad,
     proveedorId:
       proveedorId !== undefined ? String(proveedorId).trim() : actual.proveedorId,
