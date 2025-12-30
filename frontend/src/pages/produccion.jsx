@@ -1,34 +1,45 @@
 // frontend/src/pages/produccion.jsx
 import { useEffect, useState } from "react";
-import { getProductos, getRecetas, getModelos, createProduccion } from "../api";
+import {
+  getProductos,
+  getRecetas,
+  getModelos,
+  getProducciones,
+  createProduccion,
+} from "../api";
 
 export default function Produccion() {
   const [productos, setProductos] = useState([]);
   const [recetas, setRecetas] = useState([]);
   const [modelos, setModelos] = useState([]);
+  const [producciones, setProducciones] = useState([]);
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [mensaje, setMensaje] = useState("");
 
   const [productoId, setProductoId] = useState("");
-  const [modeloId, setModeloId] = useState(""); // 🔹 NUEVO
-  const [cantidad, setCantidad] = useState(1); // unidades o lotes
-  const [unidadesBuenas, setUnidadesBuenas] = useState(""); // solo para lote
+  const [modeloId, setModeloId] = useState("");
+  const [cantidad, setCantidad] = useState(1);
+  const [unidadesBuenas, setUnidadesBuenas] = useState("");
   const [tipoProduccion, setTipoProduccion] = useState("unidad");
 
   async function loadDatos() {
     try {
       setError("");
       setLoading(true);
-      const [prodData, recData, modData] = await Promise.all([
+
+      const [prodData, recData, modData, prodOpsData] = await Promise.all([
         getProductos(),
         getRecetas(),
         getModelos(),
+        getProducciones(),
       ]);
+
       setProductos(prodData);
       setRecetas(recData);
       setModelos(modData);
+      setProducciones(prodOpsData || []);
     } catch (e) {
       setError(e.message || "Error cargando datos");
     } finally {
@@ -40,7 +51,6 @@ export default function Produccion() {
     loadDatos();
   }, []);
 
-  // Cada vez que cambia el producto seleccionado, determinamos su tipoProduccion
   useEffect(() => {
     if (!productoId) {
       setTipoProduccion("unidad");
@@ -53,13 +63,10 @@ export default function Produccion() {
     } else {
       setTipoProduccion("unidad");
     }
-    // reset modelo al cambiar producto
     setModeloId("");
   }, [productoId, recetas]);
 
-  const modelosDelProducto = modelos.filter(
-    (m) => m.productoId === productoId
-  );
+  const modelosDelProducto = modelos.filter((m) => m.productoId === productoId);
 
   async function onSubmit(e) {
     e.preventDefault();
@@ -83,7 +90,7 @@ export default function Produccion() {
     };
 
     if (modeloId) {
-      payload.modeloId = modeloId; // 🔹 se manda al backend
+      payload.modeloId = modeloId;
     }
 
     if (tipoProduccion === "lote") {
@@ -100,8 +107,9 @@ export default function Produccion() {
     try {
       const resp = await createProduccion(payload);
 
-      const nombreProd =
-        productos.find((p) => p.id === productoId)?.nombre || "Producto";
+      const prodSel = productos.find((p) => p.id === productoId);
+      const nombreProd = prodSel?.nombre || "Producto";
+      const controlStock = prodSel?.controlStock || "automatico";
 
       const nombreModelo = modeloId
         ? modelos.find((m) => m.id === modeloId)?.nombreModelo || ""
@@ -109,15 +117,21 @@ export default function Produccion() {
 
       const etiquetaModelo = nombreModelo ? ` (modelo: ${nombreModelo})` : "";
 
+      let textoBase = "";
       if (resp.produccion.tipoProduccion === "lote") {
-        setMensaje(
-          `Producción registrada: ${resp.produccion.cantidad} lote(s)/plancha(s) de "${nombreProd}"${etiquetaModelo}, sumando ${resp.produccion.unidadesBuenas} unidades buenas. Stock actual del producto: ${resp.productoActualizado.stock}.`
-        );
+        textoBase = `Producción registrada: ${resp.produccion.cantidad} lote(s)/plancha(s) de "${nombreProd}"${etiquetaModelo}, sumando ${resp.produccion.unidadesBuenas} unidades buenas.`;
       } else {
-        setMensaje(
-          `Producción registrada: ${resp.produccion.cantidad} unidad(es) de "${nombreProd}"${etiquetaModelo}. Stock actual del producto: ${resp.productoActualizado.stock}.`
-        );
+        textoBase = `Producción registrada: ${resp.produccion.cantidad} unidad(es) de "${nombreProd}"${etiquetaModelo}.`;
       }
+
+      if (controlStock === "automatico") {
+        textoBase += ` Stock actual del producto: ${resp.productoActualizado.stock}.`;
+      } else {
+        textoBase +=
+          " (Este producto no tiene control de stock automático, el número de stock visible no se ajusta solo).";
+      }
+
+      setMensaje(textoBase);
 
       await loadDatos();
       setCantidad(1);
@@ -149,7 +163,8 @@ export default function Produccion() {
             <option value="">-- elegir producto --</option>
             {productos.map((p) => (
               <option key={p.id} value={p.id}>
-                {p.nombre} (stock: {p.stock})
+                {p.nombre} (stock: {p.stock}
+                {p.controlStock === "sin_stock" ? " · sin control auto" : ""})
               </option>
             ))}
           </select>
@@ -166,7 +181,11 @@ export default function Produccion() {
               {modelosDelProducto.map((m) => (
                 <option key={m.id} value={m.id}>
                   {m.nombreModelo}{" "}
-                  {m.categoria ? `(${m.categoria}${m.subcategoria ? " - " + m.subcategoria : ""})` : ""}
+                  {m.categoria
+                    ? `(${m.categoria}${
+                        m.subcategoria ? " - " + m.subcategoria : ""
+                      })`
+                    : ""}
                 </option>
               ))}
             </select>
@@ -222,35 +241,142 @@ export default function Produccion() {
         <button type="submit">Registrar producción</button>
       </form>
 
-      <h2>Productos (vista rápida de stock)</h2>
-      <table border="1" cellPadding="8">
-        <thead>
-          <tr>
-            <th>Nombre</th>
-            <th>Categoría</th>
-            <th>Precio</th>
-            <th>Stock</th>
-            <th>Unidad</th>
-          </tr>
-        </thead>
-        <tbody>
-          {productos.map((p) => (
-            <tr key={p.id}>
-              <td>{p.nombre}</td>
-              <td>{p.categoria}</td>
-              <td>{p.precio}</td>
-              <td>{p.stock}</td>
-              <td>{p.unidad}</td>
-            </tr>
-          ))}
+      <h2 style={{ marginTop: "24px" }}>Productos y modelos</h2>
 
-          {!loading && productos.length === 0 && (
-            <tr>
-              <td colSpan="5">No hay productos.</td>
-            </tr>
-          )}
-        </tbody>
-      </table>
+      {productos.length === 0 && !loading && <p>No hay productos.</p>}
+
+      {productos.map((p) => {
+        const modelosDeEsteProducto = modelos.filter(
+          (m) => m.productoId === p.id
+        );
+        const cantidadModelos = modelosDeEsteProducto.length;
+
+        const nombreProdLower = (p.nombre || "").toLowerCase();
+        const esCuaderno = nombreProdLower.includes("cuaderno");
+        const esAutomatico = p.controlStock !== "sin_stock";
+
+        return (
+          <details
+            key={p.id}
+            style={{
+              marginBottom: "8px",
+              borderRadius: "6px",
+              overflow: "hidden",
+              border: "1px solid #333",
+              background: "#111",
+            }}
+          >
+            <summary
+              style={{
+                cursor: "pointer",
+                padding: "10px 14px",
+                background: "#1f2933",
+                color: "#f9fafb",
+                fontWeight: 600,
+                listStyle: "none",
+              }}
+            >
+              {p.nombre} · stock: {p.stock}
+              {p.controlStock === "sin_stock" ? " · sin control auto" : ""}
+            </summary>
+
+            <div
+              style={{
+                padding: "10px 14px",
+                background: "#111827",
+                borderTop: "1px solid #333",
+              }}
+            >
+              {esCuaderno && cantidadModelos === 0 && (
+                <p
+                  style={{
+                    fontSize: 13,
+                    marginBottom: 8,
+                    padding: "6px 8px",
+                    background: "#7c2d12",
+                    color: "#fed7aa",
+                    borderRadius: "4px",
+                  }}
+                >
+                  ⚠️ Este cuaderno todavía no tiene ningún modelo/tapa
+                  registrada. Con que tengas al menos 1 modelo ya estarías OK.
+                </p>
+              )}
+
+              {cantidadModelos === 0 ? (
+                !esCuaderno && (
+                  <p style={{ fontSize: 13 }}>
+                    Este producto todavía no tiene modelos/diseños cargados.
+                  </p>
+                )
+              ) : (
+                <div
+                  style={{
+                    display: "flex",
+                    flexWrap: "wrap",
+                    gap: "8px",
+                    marginTop: "8px",
+                  }}
+                >
+                  {modelosDeEsteProducto.map((m) => {
+                    const produccionesDeEsteModelo = producciones.filter(
+                      (pr) => pr.modeloId === m.id
+                    );
+
+                    const unidadesProducidas = produccionesDeEsteModelo.reduce(
+                      (acc, pr) => acc + (Number(pr.incrementoStock) || 0),
+                      0
+                    );
+
+                    const stockModelo = Number(m.stockModelo ?? 0);
+
+                    return (
+                      <div
+                        key={m.id}
+                        style={{
+                          border: "1px solid #4b5563",
+                          borderRadius: "6px",
+                          padding: "8px 10px",
+                          minWidth: "220px",
+                          background: "#020617",
+                          color: "#e5e7eb",
+                        }}
+                      >
+                        <strong>{m.nombreModelo}</strong>
+                        <div style={{ fontSize: 12, marginTop: 4 }}>
+                          {m.categoria && (
+                            <div>
+                              {m.categoria}
+                              {m.subcategoria ? ` – ${m.subcategoria}` : ""}
+                            </div>
+                          )}
+                          {m.codigoInterno && (
+                            <div>Código: {m.codigoInterno}</div>
+                          )}
+
+                          {esAutomatico && (
+                            <div>
+                              Stock actual de este modelo:{" "}
+                              <b>{stockModelo}</b>
+                            </div>
+                          )}
+
+                          <div>
+                            Unidades producidas (histórico) para este modelo:{" "}
+                            <b>{unidadesProducidas}</b>
+                          </div>
+
+                          {m.estado && <div>Estado: {m.estado}</div>}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          </details>
+        );
+      })}
     </div>
   );
 }

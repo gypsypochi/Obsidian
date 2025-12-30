@@ -1,6 +1,12 @@
 // frontend/src/pages/ventas.jsx
 import { useEffect, useMemo, useState } from "react";
-import { getProductos, getVentas, createVenta, getFerias } from "../api";
+import {
+  getProductos,
+  getVentas,
+  createVenta,
+  getFerias,
+  getModelos,
+} from "../api";
 
 const OPCIONES_CANAL = [
   { value: "feria", label: "Feria" },
@@ -12,6 +18,7 @@ export default function Ventas() {
   const [productos, setProductos] = useState([]);
   const [ventas, setVentas] = useState([]);
   const [ferias, setFerias] = useState([]);
+  const [modelos, setModelos] = useState([]);
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -26,18 +33,20 @@ export default function Ventas() {
   const [feriaId, setFeriaId] = useState("");
   const [origen, setOrigen] = useState("");
 
-  // 🔹 NUEVO: detalle del modelo / diseño vendido
+  // Detalle texto libre del modelo / diseño
   const [detalleModelo, setDetalleModelo] = useState("");
+
+  // Controles para categoría y modelo (plancha / tapa)
+  const [categoriaModelo, setCategoriaModelo] = useState("");
+  const [modeloId, setModeloId] = useState("");
 
   async function load() {
     try {
       setError("");
       setLoading(true);
-      const [prodData, ventasData, feriasData] = await Promise.all([
-        getProductos(),
-        getVentas(),
-        getFerias(),
-      ]);
+      const [prodData, ventasData, feriasData, modelosData] = await Promise.all(
+        [getProductos(), getVentas(), getFerias(), getModelos()]
+      );
 
       setProductos(prodData);
       setVentas(ventasData);
@@ -48,6 +57,7 @@ export default function Ventas() {
         return fb - fa;
       });
       setFerias(feriasOrdenadas);
+      setModelos(modelosData || []);
     } catch (e) {
       setError(e.message || "Error cargando datos de ventas");
     } finally {
@@ -58,6 +68,18 @@ export default function Ventas() {
   useEffect(() => {
     load();
   }, []);
+
+  // producto seleccionado
+  const productoSeleccionado = useMemo(
+    () => productos.find((p) => p.id === productoId) || null,
+    [productos, productoId]
+  );
+
+  // Si cambia el producto, reseteamos categoría y modelo
+  useEffect(() => {
+    setCategoriaModelo("");
+    setModeloId("");
+  }, [productoId]);
 
   useEffect(() => {
     if (!productoId) {
@@ -70,18 +92,50 @@ export default function Ventas() {
     }
   }, [productoId, productos]);
 
+  const modelosDelProducto = useMemo(
+    () => modelos.filter((m) => m.productoId === productoId),
+    [modelos, productoId]
+  );
+
+  // Categorías únicas de esos modelos
+  const categoriasDisponibles = useMemo(() => {
+    const setCat = new Set(
+      modelosDelProducto.map((m) => m.categoria).filter(Boolean)
+    );
+    return Array.from(setCat);
+  }, [modelosDelProducto]);
+
+  // Modelos filtrados por categoría elegida
+  const modelosFiltradosPorCategoria = useMemo(() => {
+    if (!categoriaModelo) return modelosDelProducto;
+    return modelosDelProducto.filter((m) => m.categoria === categoriaModelo);
+  }, [modelosDelProducto, categoriaModelo]);
+
   const ventasEnriquecidas = useMemo(() => {
     const mapaProductos = new Map(productos.map((p) => [p.id, p]));
     const mapaFerias = new Map(ferias.map((f) => [f.id, f]));
+    const mapaModelos = new Map(modelos.map((m) => [m.id, m]));
 
     const lista = ventas.map((v) => {
       const prod = mapaProductos.get(v.productoId);
       const feria = v.feriaId ? mapaFerias.get(v.feriaId) : null;
+      const modelo = v.modeloId ? mapaModelos.get(v.modeloId) : null;
+
+      const nombreProducto = prod ? prod.nombre : v.productoId;
+      const nombreFeria = feria ? feria.nombre : v.feriaId || null;
+
+      const nombreModelo =
+        (modelo && modelo.nombreModelo) || v.detalleModelo || null;
+
+      const categoriaModeloMostrar =
+        v.categoriaModelo || (modelo && modelo.categoria) || null;
 
       return {
         ...v,
-        nombreProducto: prod ? prod.nombre : v.productoId,
-        nombreFeria: feria ? feria.nombre : v.feriaId || null,
+        nombreProducto,
+        nombreFeria,
+        nombreModelo,
+        categoriaModeloMostrar,
       };
     });
 
@@ -92,7 +146,7 @@ export default function Ventas() {
     });
 
     return lista;
-  }, [ventas, productos, ferias]);
+  }, [ventas, productos, ferias, modelos]);
 
   function formatFecha(fechaStr) {
     const d = new Date(fechaStr);
@@ -137,21 +191,36 @@ export default function Ventas() {
       canal,
       feriaId: canal === "feria" ? feriaId : null,
       origen: origen || null,
-      detalleModelo: detalleModelo || null, // 🔹 NUEVO
+      detalleModelo: detalleModelo || null,
     };
+
+    // Mandamos modeloId y categoriaModelo solo si se eligieron
+    if (modeloId) ventaPayload.modeloId = modeloId;
+    if (categoriaModelo) ventaPayload.categoriaModelo = categoriaModelo;
 
     try {
       const resp = await createVenta(ventaPayload);
 
-      const nombreProd =
-        productos.find((p) => p.id === productoId)?.nombre || "Producto";
+      const prodSel =
+        productos.find((p) => p.id === productoId) || productoSeleccionado;
+      const controlStock = prodSel?.controlStock || "automatico";
+      const nombreProd = prodSel?.nombre || "Producto";
 
-      setMensaje(
-        `Venta registrada: ${cantNum} unidad(es) de "${nombreProd}" a $${precioNum} c/u. Total: $${resp.venta.montoTotal}. Stock actual: ${resp.productoActualizado.stock}.`
-      );
+      let textoMensajeBase = `Venta registrada: ${cantNum} unidad(es) de "${nombreProd}" a $${precioNum} c/u. Total: $${resp.venta.montoTotal}.`;
+
+      if (controlStock === "automatico") {
+        textoMensajeBase += ` Stock actual: ${
+          resp.productoActualizado?.stock ?? "–"
+        }.`;
+      } else {
+        textoMensajeBase +=
+          " (Este producto no tiene control de stock automático).";
+      }
+
+      setMensaje(textoMensajeBase);
 
       setCantidad(1);
-      // dejamos precio, canal, feria y detalle para cargar varias seguidas
+      // dejamos precio, canal, feria, detalle y modelo/categoría para cargar varias seguidas
       await load();
     } catch (e) {
       setError(e.message || "Error registrando venta");
@@ -178,13 +247,78 @@ export default function Ventas() {
             <option value="">-- elegir producto --</option>
             {productos.map((p) => (
               <option key={p.id} value={p.id}>
-                {p.nombre} (stock: {p.stock})
+                {p.nombre} (stock: {p.stock}
+                {p.controlStock === "sin_stock" ? " · sin control auto" : ""})
               </option>
             ))}
           </select>
         </div>
 
-        <div>
+        {/* AHORA: mostramos categoría/modelo si el producto tiene modelos asociados,
+            sin importar si es sticker o cuaderno */}
+        {productoId && modelosDelProducto.length > 0 && (
+          <fieldset
+            style={{
+              marginTop: 10,
+              padding: 8,
+              border: "1px solid #e5e7eb",
+            }}
+          >
+            <legend style={{ fontSize: 13 }}>
+              Detalle opcional de modelo / plancha / tapa
+            </legend>
+
+            <div>
+              <label>Categoría de modelo</label>
+              <select
+                value={categoriaModelo}
+                onChange={(e) => {
+                  setCategoriaModelo(e.target.value);
+                  setModeloId("");
+                }}
+                style={{ marginLeft: 4 }}
+              >
+                <option value="">-- cualquiera --</option>
+                {categoriasDisponibles.map((cat) => (
+                  <option key={cat} value={cat}>
+                    {cat}
+                  </option>
+                ))}
+              </select>
+              <p style={{ fontSize: 11 }}>
+                Ej: Anime, Naturaleza, etc. Para cuadernos serían las categorías
+                de tapas; para stickers, las cajitas.
+              </p>
+            </div>
+
+            <div style={{ marginTop: 6 }}>
+              <label>Modelo / plancha / tapa</label>
+              <select
+                value={modeloId}
+                onChange={(e) => setModeloId(e.target.value)}
+                style={{ marginLeft: 4 }}
+              >
+                <option value="">-- sin modelo específico --</option>
+                {modelosFiltradosPorCategoria.map((m) => (
+                  <option key={m.id} value={m.id}>
+                    {m.nombreModelo}
+                    {m.categoria
+                      ? ` (${m.categoria}${
+                          m.subcategoria ? " - " + m.subcategoria : ""
+                        })`
+                      : ""}
+                  </option>
+                ))}
+              </select>
+              <p style={{ fontSize: 11 }}>
+                Para cuadernos: elegí la tapa que vendiste. Para stickers:
+                elegí la plancha si sabés cuál fue.
+              </p>
+            </div>
+          </fieldset>
+        )}
+
+        <div style={{ marginTop: 8 }}>
           <label>Cantidad vendida *</label>
           <input
             type="number"
@@ -208,18 +342,18 @@ export default function Ventas() {
           </p>
         </div>
 
-        {/* 🔹 NUEVO: Detalle del modelo/diseño vendido */}
+        {/* Detalle de modelo / diseño (texto libre) */}
         <div>
-          <label>Detalle modelo / diseño</label>
+          <label>Detalle modelo / diseño (texto)</label>
           <input
             type="text"
             value={detalleModelo}
             onChange={(e) => setDetalleModelo(e.target.value)}
-            placeholder="Ej: HP - Modelo 2 tapa dura, Imán anime plancha 3..."
+            placeholder="Ej: Tapa panda blanda, Caja Anime variada..."
           />
           <p style={{ fontSize: 12 }}>
-            Útil para cuadernos, imanes, pines, etc. Para planchas de stickers
-            podés dejarlo vacío si es un mix.
+            Podés usarlo como nota libre. Si elegís modelo/categoría arriba,
+            igual queda todo guardado.
           </p>
         </div>
 
@@ -265,8 +399,7 @@ export default function Ventas() {
                 {ferias.map((f) => (
                   <option key={f.id} value={f.id}>
                     {f.nombre} –{" "}
-                    {new Date(f.fecha).toLocaleDateString("es-AR")} (
-                    {f.estado})
+                    {new Date(f.fecha).toLocaleDateString("es-AR")} ({f.estado})
                   </option>
                 ))}
               </select>
@@ -308,7 +441,8 @@ export default function Ventas() {
             <th>Cantidad</th>
             <th>Precio unitario</th>
             <th>Monto total</th>
-            <th>Modelo / diseño</th> {/* 🔹 NUEVA COLUMNA */}
+            <th>Modelo / diseño</th>
+            <th>Categoría modelo</th>
             <th>Canal / Feria</th>
           </tr>
         </thead>
@@ -331,7 +465,8 @@ export default function Ventas() {
                 <td>{v.cantidad}</td>
                 <td>{v.precioUnitario}</td>
                 <td>{v.montoTotal}</td>
-                <td>{v.detalleModelo || "-"}</td>
+                <td>{v.nombreModelo || "-"}</td>
+                <td>{v.categoriaModeloMostrar || "-"}</td>
                 <td>{canalTexto}</td>
               </tr>
             );
@@ -339,7 +474,7 @@ export default function Ventas() {
 
           {!loading && ventasEnriquecidas.length === 0 && (
             <tr>
-              <td colSpan="7">No hay ventas registradas todavía.</td>
+              <td colSpan="8">No hay ventas registradas todavía.</td>
             </tr>
           )}
         </tbody>

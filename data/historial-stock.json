@@ -111,5 +111,129 @@
     "stockDespues": 12,
     "ventaId": "venta-1767039933121",
     "fecha": "2025-12-29T20:25:33.121Z"
+  },
+  {
+    "id": "mov-1767119915289-venta",
+    "productoId": "prod-1766762332322",
+    "tipoMovimiento": "venta",
+    "cantidad": -30,
+    "stockAntes": 151,
+    "stockDespues": 121,
+    "ventaId": "venta-1767119915288",
+    "fecha": "2025-12-30T18:38:35.288Z"
+  },
+  {
+    "id": "mov-1767120033648",
+    "productoId": "prod-1766762332322",
+    "tipoMovimiento": "produccion",
+    "cantidad": 25,
+    "stockAntes": 121,
+    "stockDespues": 146,
+    "produccionId": "prodop-1767120033647",
+    "fecha": "2025-12-30T18:40:33.647Z",
+    "modeloId": "mod-1766786108664"
+  },
+  {
+    "id": "mov-1767120106524-venta",
+    "productoId": "prod-1766762332322",
+    "tipoMovimiento": "venta",
+    "cantidad": -25,
+    "stockAntes": 146,
+    "stockDespues": 121,
+    "ventaId": "venta-1767120106524",
+    "fecha": "2025-12-30T18:41:46.524Z"
+  },
+  {
+    "id": "mov-1767120159720-venta",
+    "productoId": "prod-1766527364936",
+    "tipoMovimiento": "venta",
+    "cantidad": -1,
+    "stockAntes": 12,
+    "stockDespues": 11,
+    "ventaId": "venta-1767120159720",
+    "fecha": "2025-12-30T18:42:39.720Z"
+  },
+  {
+    "id": "mov-1767120195918-venta",
+    "productoId": "prod-1766527364936",
+    "tipoMovimiento": "venta",
+    "cantidad": -1,
+    "stockAntes": 11,
+    "stockDespues": 10,
+    "ventaId": "venta-1767120195918",
+    "fecha": "2025-12-30T18:43:15.918Z"
+  },
+  {
+    "id": "mov-1767120531845-venta",
+    "productoId": "prod-1766527364936",
+    "tipoMovimiento": "venta",
+    "cantidad": -1,
+    "stockAntes": 10,
+    "stockDespues": 9,
+    "ventaId": "venta-1767120531844",
+    "fecha": "2025-12-30T18:48:51.844Z"
+  },
+  {
+    "id": "mov-1767120839314",
+    "productoId": "prod-1766762332322",
+    "tipoMovimiento": "produccion",
+    "cantidad": 25,
+    "stockAntes": 0,
+    "stockDespues": 25,
+    "produccionId": "prodop-1767120839313",
+    "fecha": "2025-12-30T18:53:59.313Z",
+    "modeloId": "mod-1766781838703"
+  },
+  {
+    "id": "mov-1767120853392",
+    "productoId": "prod-1766762332322",
+    "tipoMovimiento": "produccion",
+    "cantidad": 25,
+    "stockAntes": 25,
+    "stockDespues": 50,
+    "produccionId": "prodop-1767120853391",
+    "fecha": "2025-12-30T18:54:13.391Z",
+    "modeloId": "mod-1766786108664"
+  },
+  {
+    "id": "mov-1767120873877-venta",
+    "productoId": "prod-1766762332322",
+    "tipoMovimiento": "venta",
+    "cantidad": -20,
+    "stockAntes": 50,
+    "stockDespues": 30,
+    "ventaId": "venta-1767120873877",
+    "fecha": "2025-12-30T18:54:33.877Z"
+  },
+  {
+    "id": "mov-1767120891839-venta",
+    "productoId": "prod-1766762332322",
+    "tipoMovimiento": "venta",
+    "cantidad": -5,
+    "stockAntes": 30,
+    "stockDespues": 25,
+    "ventaId": "venta-1767120891838",
+    "fecha": "2025-12-30T18:54:51.838Z"
+  },
+  {
+    "id": "mov-1767120973478",
+    "productoId": "prod-1766527364936",
+    "tipoMovimiento": "produccion",
+    "cantidad": 1,
+    "stockAntes": 9,
+    "stockDespues": 10,
+    "produccionId": "prodop-1767120973478",
+    "fecha": "2025-12-30T18:56:13.478Z",
+    "modeloId": "mod-1766783005892"
+  },
+  {
+    "id": "mov-1767120996643-venta",
+    "productoId": "prod-1766527364936",
+    "tipoMovimiento": "venta",
+    "cantidad": -1,
+    "stockAntes": 10,
+    "stockDespues": 9,
+    "ventaId": "venta-1767120996642",
+    "fecha": "2025-12-30T18:56:36.642Z"
   }
 ]

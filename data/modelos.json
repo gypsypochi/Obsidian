@@ -9,7 +9,8 @@
     "imagenRef": "http://localhost:3001/uploads/imagenes/Captura de pantalla 2025-12-26 163905-1766781826486.png",
     "archivoPlancha": "http://localhost:3001/uploads/planchas/Anime 1-1766781837519.pdf",
     "notas": "",
-    "fechaCreacion": "2025-12-26T20:43:58.703Z"
+    "fechaCreacion": "2025-12-26T20:43:58.703Z",
+    "stockModelo": 5
   },
   {
     "id": "mod-1766783005892",
@@ -21,7 +22,8 @@
     "imagenRef": "http://localhost:3001/uploads/imagenes/Captura de pantalla 2025-12-26 180300-1766782987071.png",
     "archivoPlancha": "http://localhost:3001/uploads/planchas/blanda panda-1766783001093.pdf",
     "notas": "",
-    "fechaCreacion": "2025-12-26T21:03:25.892Z"
+    "fechaCreacion": "2025-12-26T21:03:25.892Z",
+    "stockModelo": 0
   },
   {
     "id": "mod-1766786108664",
@@ -33,6 +35,7 @@
     "imagenRef": "http://localhost:3001/uploads/imagenes/Captura de pantalla 2025-12-26 172057-1766786094444.png",
     "archivoPlancha": "http://localhost:3001/uploads/planchas/Anime 2-1766786105448.pdf",
     "notas": "",
-    "fechaCreacion": "2025-12-26T21:55:08.664Z"
+    "fechaCreacion": "2025-12-26T21:55:08.664Z",
+    "stockModelo": 20
   }
 ]

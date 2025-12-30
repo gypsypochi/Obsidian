@@ -3,14 +3,14 @@
     "id": "mat-1766518351924",
     "nombre": "vinilo mate",
     "categoria": "vinilos",
-    "stock": 5,
+    "stock": 4,
     "unidad": "planchas"
   },
   {
     "id": "mat-1766518457021",
     "nombre": "vinilo brillante",
     "categoria": "vinilos",
-    "stock": 0,
+    "stock": 2,
     "unidad": "planchas"
   },
   {

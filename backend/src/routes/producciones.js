@@ -12,6 +12,8 @@ const {
   writeProducciones,
   readHistorialStock,
   writeHistorialStock,
+  readModelos,
+  writeModelos,
 } = require("../utils/fileDB");
 
 // GET /producciones - listar historial de producciones
@@ -43,11 +45,14 @@ router.post("/", (req, res) => {
     const productos = readProductos();
     const materiales = readMaterials();
     const recetas = readRecetas();
+    const modelos = readModelos();
 
     const producto = productos.find((p) => p.id === productoId);
     if (!producto) {
       return res.status(404).json({ error: "Producto no encontrado" });
     }
+
+    const controlStock = producto.controlStock || "automatico";
 
     const recetasProducto = recetas.filter((r) => r.productoId === productoId);
     if (recetasProducto.length === 0) {
@@ -56,10 +61,8 @@ router.post("/", (req, res) => {
         .json({ error: "El producto no tiene receta asociada" });
     }
 
-    // Asumimos mismo tipoProduccion para todas las filas de receta de ese producto
     const tipoProduccion = recetasProducto[0].tipoProduccion || "unidad";
 
-    // Si es lote, unidadesBuenas es obligatorio (porque el rendimiento es variable)
     let unidadesBuenasNum = undefined;
     if (tipoProduccion === "lote") {
       if (unidadesBuenas === undefined) {
@@ -87,7 +90,6 @@ router.post("/", (req, res) => {
         );
       }
 
-      // factor = cantidad de producción (unidades o lotes)
       const factor = cantidad;
       const cantidadNecesaria = (r.cantidad || 0) * factor;
 
@@ -99,7 +101,6 @@ router.post("/", (req, res) => {
       };
     });
 
-    // Verificar stock suficiente
     const faltantes = requerimientos.filter(
       (req) => req.requerido > req.stockActual
     );
@@ -116,7 +117,7 @@ router.post("/", (req, res) => {
       });
     }
 
-    // Descontar materiales
+    // Descontar materiales SIEMPRE
     for (const reqMat of requerimientos) {
       const idx = materiales.findIndex((m) => m.id === reqMat.materialId);
       if (idx !== -1) {
@@ -125,34 +126,44 @@ router.post("/", (req, res) => {
       }
     }
 
-    // Aumentar stock del producto
     const productoIndex = productos.findIndex((p) => p.id === productoId);
-
-    const stockAntes = productos[productoIndex].stock || 0;
 
     let incrementoStock;
     if (tipoProduccion === "lote") {
-      // En lote, sumamos la cantidad real de unidades buenas
       incrementoStock = unidadesBuenasNum;
     } else {
-      // En unidad, 1 producción = 1 unidad
       incrementoStock = cantidad;
     }
 
-    const stockDespues = stockAntes + incrementoStock;
-    productos[productoIndex].stock = stockDespues;
+    const stockAntes = productos[productoIndex].stock || 0;
+    let stockDespues = stockAntes;
 
-    // Guardar cambios en materiales y productos
+    if (controlStock === "automatico") {
+      stockDespues = stockAntes + incrementoStock;
+      productos[productoIndex].stock = stockDespues;
+    }
+
+    // Guardar materiales y productos
     writeMaterials(materiales);
     writeProductos(productos);
 
-    // Registrar la producción en producciones.json
+    // 🔹 NUEVO: actualizar stockModelo si corresponde
+    if (controlStock === "automatico" && modeloId) {
+      const modelosLista = Array.isArray(modelos) ? [...modelos] : [];
+      const idxModelo = modelosLista.findIndex((m) => m.id === modeloId);
+      if (idxModelo !== -1) {
+        const actual = Number(modelosLista[idxModelo].stockModelo || 0);
+        modelosLista[idxModelo].stockModelo = actual + incrementoStock;
+        writeModelos(modelosLista);
+      }
+    }
+
     const producciones = readProducciones();
     const nuevaProduccion = {
       id: `prodop-${Date.now()}`,
       productoId,
-      modeloId: modeloId || null, // 🔹 NUEVO: a qué modelo/diseño corresponde (opcional)
-      cantidad, // unidades o lotes, según tipoProduccion
+      modeloId: modeloId || null,
+      cantidad,
       tipoProduccion,
       unidadesBuenas: tipoProduccion === "lote" ? incrementoStock : null,
       incrementoStock,
@@ -166,21 +177,22 @@ router.post("/", (req, res) => {
     producciones.push(nuevaProduccion);
     writeProducciones(producciones);
 
-    // Registrar movimiento de stock en historial-stock.json
-    const historial = readHistorialStock();
-    const nuevoMovimiento = {
-      id: `mov-${Date.now()}`,
-      productoId,
-      tipoMovimiento: "produccion",
-      cantidad: incrementoStock, // cuánto cambió el stock (+)
-      stockAntes,
-      stockDespues,
-      produccionId: nuevaProduccion.id,
-      fecha: nuevaProduccion.fecha,
-      modeloId: modeloId || null, // opcional, por si un día queremos ver historial por modelo
-    };
-    historial.push(nuevoMovimiento);
-    writeHistorialStock(historial);
+    if (controlStock === "automatico") {
+      const historial = readHistorialStock();
+      const nuevoMovimiento = {
+        id: `mov-${Date.now()}`,
+        productoId,
+        tipoMovimiento: "produccion",
+        cantidad: incrementoStock,
+        stockAntes,
+        stockDespues,
+        produccionId: nuevaProduccion.id,
+        fecha: nuevaProduccion.fecha,
+        modeloId: modeloId || null,
+      };
+      historial.push(nuevoMovimiento);
+      writeHistorialStock(historial);
+    }
 
     res.status(201).json({
       produccion: nuevaProduccion,
