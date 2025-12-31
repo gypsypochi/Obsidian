@@ -1,0 +1,188 @@
+/* ===========================
+   Sidebar OBSIDIAN
+   =========================== */
+
+.sidebar {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: var(--space-lg) var(--space-md);
+  background: radial-gradient(
+      circle at top left,
+      rgba(139, 92, 246, 0.35),
+      transparent 55%
+    ),
+    radial-gradient(
+      circle at bottom,
+      rgba(56, 189, 248, 0.25),
+      transparent 60%
+    ),
+    var(--color-surface);
+  border-right: 1px solid rgba(148, 163, 184, 0.25);
+  min-height: 100vh;
+  width: 260px;
+}
+
+/* Header con logo y nombre */
+.sidebar-header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  margin-bottom: var(--space-lg);
+}
+
+.sidebar-logo {
+  width: 38px;
+  height: 38px;
+  border-radius: var(--radius-full);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: radial-gradient(circle at top, var(--primary-light), var(--primary-dark));
+  box-shadow: var(--shadow-soft);
+}
+
+.sidebar-logo-gem {
+  font-size: 1.4rem;
+  color: #fff;
+}
+
+.sidebar-title {
+  display: flex;
+  flex-direction: column;
+}
+
+.sidebar-title-name {
+  font-family: var(--font-title);
+  font-size: 1.1rem;
+  letter-spacing: 0.08em;
+}
+
+.sidebar-title-version {
+  font-size: var(--font-size-xs);
+  color: var(--text-muted);
+}
+
+/* Navegación */
+.sidebar-nav {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+}
+
+.sidebar-section {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+}
+
+/* Botón de sección colapsable (Base / Operativa / Finanzas) */
+.sidebar-section-toggle {
+  width: 100%;
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  font-size: var(--font-size-xs);
+  padding: 0.3rem 0.35rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  cursor: pointer;
+}
+
+.sidebar-section-toggle:hover {
+  color: #fff;
+}
+
+/* Caret que rota */
+.caret {
+  transition: transform 0.2s ease;
+}
+
+.caret.open {
+  transform: rotate(90deg);
+}
+
+/* Contenedor colapsable */
+.sidebar-section-content {
+  overflow: hidden;
+  max-height: 0;
+  transition: max-height 0.25s ease-in-out;
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+/* Cuando la sección está abierta */
+.sidebar-section-content.open {
+  max-height: 500px; /* más que suficiente para todos los links */
+}
+
+/* Links */
+.sidebar-link {
+  display: block;
+  padding: 0.45rem 0.75rem;
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-sm);
+  color: var(--text-secondary);
+  text-decoration: none;
+  transition:
+    background-color 0.16s ease,
+    color 0.16s ease,
+    transform 0.08s ease;
+}
+
+.sidebar-link:hover {
+  background-color: rgba(15, 23, 42, 0.85);
+  color: #e5e7eb;
+}
+
+.sidebar-link.is-active {
+  background: linear-gradient(
+    135deg,
+    rgba(139, 92, 246, 0.9),
+    rgba(56, 189, 248, 0.9)
+  );
+  color: #ffffff;
+  transform: translateY(-1px);
+}
+
+/* Footer pequeñito */
+.sidebar-footer {
+  margin-top: var(--space-lg);
+  padding-top: var(--space-md);
+  border-top: 1px solid rgba(148, 163, 184, 0.25);
+}
+
+.sidebar-footer-text {
+  font-size: var(--font-size-xs);
+  color: var(--text-muted);
+}
+
+.sidebar-logo-img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+
+/* ===========================
+   Responsive básico
+   =========================== */
+
+@media (max-width: 900px) {
+  .app-layout {
+    grid-template-columns: 220px minmax(0, 1fr);
+  }
+
+  .sidebar {
+    width: 220px;
+    padding: var(--space-md);
+  }
+
+  .sidebar-title-name {
+    font-size: 1rem;
+  }
+}
