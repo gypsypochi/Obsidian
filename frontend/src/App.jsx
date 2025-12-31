@@ -18,10 +18,8 @@ import Balance from "./pages/balance.jsx";
 export default function App() {
   return (
     <div className="app-layout">
-      {/* Sidebar fija a la izquierda */}
       <Nav />
 
-      {/* Contenido principal */}
       <main className="app-main">
         <Routes>
           <Route path="/" element={<Navigate to="/materiales" replace />} />

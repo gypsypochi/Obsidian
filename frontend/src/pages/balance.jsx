@@ -1,11 +1,32 @@
 // frontend/src/pages/balance.jsx
 import { useEffect, useMemo, useState } from "react";
-import { getVentas, getGastos, getFerias, getProductos } from "../api";
+import {
+  getVentas,
+  getGastos,
+  getFerias,
+  getProductos,
+} from "../api";
+import PageHeader from "../components/PageHeader.jsx";
+import "./balance.css";
+import {
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  Tooltip,
+  ResponsiveContainer,
+  PieChart,
+  Pie,
+  Cell,
+  Legend,
+} from "recharts";
 
 const SECCIONES = [
   { id: "dashboard", label: "Dashboard" },
   { id: "periodo", label: "Por período" },
 ];
+
+const CHART_COLORS = ["#8b5cf6", "#38bdf8", "#f472b6", "#4ade80", "#facc15"];
 
 export default function Balance() {
   const [ventas, setVentas] = useState([]);
@@ -27,7 +48,12 @@ export default function Balance() {
       setError("");
 
       const [ventasData, gastosData, feriasData, productosData] =
-        await Promise.all([getVentas(), getGastos(), getFerias(), getProductos()]);
+        await Promise.all([
+          getVentas(),
+          getGastos(),
+          getFerias(),
+          getProductos(),
+        ]);
 
       setVentas(ventasData || []);
       setGastos(gastosData || []);
@@ -47,12 +73,12 @@ export default function Balance() {
   // Mapas útiles
   const mapaFerias = useMemo(
     () => new Map(ferias.map((f) => [f.id, f])),
-    [ferias]
+    [ferias],
   );
 
   const mapaProductos = useMemo(
     () => new Map(productos.map((p) => [p.id, p])),
-    [productos]
+    [productos],
   );
 
   // ---- Cálculos globales (usados en Dashboard y Período) ----
@@ -72,7 +98,7 @@ export default function Balance() {
 
   const resultadoNeto = useMemo(
     () => totalIngresos - totalGastos,
-    [totalIngresos, totalGastos]
+    [totalIngresos, totalGastos],
   );
 
   const porcentajeGastosSobreIngresos = useMemo(() => {
@@ -108,14 +134,10 @@ export default function Balance() {
     return base;
   }
 
-  function colorPorValor(valor) {
-    if (valor > 0) return "#16a34a"; // verde
-    if (valor < 0) return "#dc2626"; // rojo
-    return "#eab308"; // amarillo
-  }
-
-  function colorResultado() {
-    return colorPorValor(resultadoNeto);
+  function clasePorValor(valor) {
+    if (valor > 0) return "text-positive";
+    if (valor < 0) return "text-negative";
+    return "text-neutral";
   }
 
   function formatFechaCorta(fechaStr) {
@@ -175,13 +197,13 @@ export default function Balance() {
   const totalGastosPeriodo = useMemo(() => {
     return (gastosFiltrados || []).reduce(
       (acc, g) => acc + (g.monto || 0),
-      0
+      0,
     );
   }, [gastosFiltrados]);
 
   const resultadoNetoPeriodo = useMemo(
     () => totalIngresosPeriodo - totalGastosPeriodo,
-    [totalIngresosPeriodo, totalGastosPeriodo]
+    [totalIngresosPeriodo, totalGastosPeriodo],
   );
 
   const porcentajeGastosSobreIngresosPeriodo = useMemo(() => {
@@ -321,7 +343,7 @@ export default function Balance() {
 
       const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(
         2,
-        "0"
+        "0",
       )}`;
 
       const prev =
@@ -374,7 +396,7 @@ export default function Balance() {
     return lista;
   }, [gastos]);
 
-  // Balance por feria (ingresos - gastos) todo en el Dashboard
+  // Balance por feria (ingresos - gastos)
   const balancePorFeria = useMemo(() => {
     if ((!ventas || ventas.length === 0) && (!gastos || gastos.length === 0)) {
       return [];
@@ -430,7 +452,6 @@ export default function Balance() {
       neto: item.ingresos - item.gastos,
     }));
 
-    // ordenar por fecha si existe, si no, por nombre
     lista.sort((a, b) => {
       if (a.fecha && b.fecha) {
         const da = new Date(a.fecha).getTime();
@@ -461,31 +482,14 @@ export default function Balance() {
       : "Sin filtros de fecha (todos los movimientos)";
 
     return (
-      <div style={{ marginTop: 24 }}>
+      <section className="balance-section balance-section-period">
         {/* Filtros de fecha */}
-        <div
-          style={{
-            border: "1px solid #4b5563",
-            borderRadius: 8,
-            padding: 12,
-            maxWidth: 600,
-            marginBottom: 16,
-          }}
-        >
-          <p style={{ margin: "0 0 8px", fontSize: 13 }}>
-            Filtrar por período
-          </p>
+        <div className="card balance-period-filters">
+          <p className="balance-label">Filtrar por período</p>
 
-          <div
-            style={{
-              display: "flex",
-              flexWrap: "wrap",
-              gap: 12,
-              alignItems: "center",
-            }}
-          >
-            <div>
-              <label style={{ fontSize: 12, display: "block" }}>Desde</label>
+          <div className="balance-period-filters-row">
+            <div className="balance-field">
+              <label>Desde</label>
               <input
                 type="date"
                 value={fechaDesde}
@@ -493,8 +497,8 @@ export default function Balance() {
               />
             </div>
 
-            <div>
-              <label style={{ fontSize: 12, display: "block" }}>Hasta</label>
+            <div className="balance-field">
+              <label>Hasta</label>
               <input
                 type="date"
                 value={fechaHasta}
@@ -502,140 +506,79 @@ export default function Balance() {
               />
             </div>
 
-            <div style={{ marginTop: 16 }}>
-              <button
-                type="button"
-                onClick={() => {
-                  setFechaDesde("");
-                  setFechaHasta("");
-                }}
-                style={{
-                  padding: "4px 8px",
-                  fontSize: 12,
-                  borderRadius: 999,
-                  border: "1px solid #4b5563",
-                  background: "transparent",
-                  cursor: "pointer",
-                }}
-              >
-                Limpiar fechas
-              </button>
+            <button
+              type="button"
+              className="btn-secondary balance-clear-btn"
+              onClick={() => {
+                setFechaDesde("");
+                setFechaHasta("");
+              }}
+            >
+              Limpiar fechas
+            </button>
+          </div>
+
+          <p className="balance-period-range">{textoRango}</p>
+        </div>
+
+        {/* KPIs del período */}
+        <div className="kpi-grid">
+          <div className="card-kpi">
+            <div className="card-kpi-header">
+              <span>Ingresos en el período</span>
+            </div>
+            <div className="card-kpi-value">
+              ${formatMonto(totalIngresosPeriodo)} ARS
+            </div>
+            <div className="card-kpi-meta">
+              Registros de ventas: {cantidadVentasPeriodo}
             </div>
           </div>
 
-          <p
-            style={{
-              margin: "8px 0 0",
-              fontSize: 12,
-              color: "#9ca3af",
-            }}
-          >
-            {textoRango}
-          </p>
-        </div>
-
-        {/* Tarjetas para el período */}
-        <div
-          style={{
-            display: "flex",
-            flexWrap: "wrap",
-            gap: 16,
-            marginBottom: 24,
-          }}
-        >
-          {/* Ingresos período */}
-          <div
-            style={{
-              flex: "1 1 220px",
-              minWidth: 220,
-              border: "1px solid #4b5563",
-              borderRadius: 8,
-              padding: 12,
-            }}
-          >
-            <p style={{ margin: 0, fontSize: 13, color: "#9ca3af" }}>
-              Ingresos en el período
-            </p>
-            <p style={{ margin: "4px 0", fontSize: 22, fontWeight: "700" }}>
-              ${formatMonto(totalIngresosPeriodo)} ARS
-            </p>
-            <p style={{ margin: 0, fontSize: 12, color: "#9ca3af" }}>
-              Registros de ventas: {cantidadVentasPeriodo}
-            </p>
-          </div>
-
-          {/* Gastos período */}
-          <div
-            style={{
-              flex: "1 1 220px",
-              minWidth: 220,
-              border: "1px solid #4b5563",
-              borderRadius: 8,
-              padding: 12,
-            }}
-          >
-            <p style={{ margin: 0, fontSize: 13, color: "#9ca3af" }}>
-              Gastos en el período
-            </p>
-            <p style={{ margin: "4px 0", fontSize: 22, fontWeight: "700" }}>
+          <div className="card-kpi">
+            <div className="card-kpi-header">
+              <span>Gastos en el período</span>
+            </div>
+            <div className="card-kpi-value">
               ${formatMonto(totalGastosPeriodo)} ARS
-            </p>
-            <p style={{ margin: 0, fontSize: 12, color: "#9ca3af" }}>
+            </div>
+            <div className="card-kpi-meta">
               Registros de gastos: {cantidadGastosPeriodo}
-            </p>
+            </div>
           </div>
 
-          {/* Resultado neto período */}
-          <div
-            style={{
-              flex: "1 1 220px",
-              minWidth: 220,
-              border: "1px solid #4b5563",
-              borderRadius: 8,
-              padding: 12,
-            }}
-          >
-            <p style={{ margin: 0, fontSize: 13, color: "#9ca3af" }}>
-              Resultado neto del período
-            </p>
-            <p
-              style={{
-                margin: "4px 0",
-                fontSize: 22,
-                fontWeight: "700",
-                color: colorPorValor(resultadoNetoPeriodo),
-              }}
+          <div className="card-kpi">
+            <div className="card-kpi-header">
+              <span>Resultado neto del período</span>
+            </div>
+            <div
+              className={`card-kpi-value ${clasePorValor(
+                resultadoNetoPeriodo,
+              )}`}
             >
               {resultadoNetoPeriodo >= 0 ? "" : "-"}$
               {formatMonto(Math.abs(resultadoNetoPeriodo))} ARS
-            </p>
-            {porcentajeGastosSobreIngresosPeriodo != null ? (
-              <p style={{ margin: 0, fontSize: 12, color: "#9ca3af" }}>
-                Gastos ={" "}
-                {porcentajeGastosSobreIngresosPeriodo
-                  .toFixed(1)
-                  .replace(".", ",")}
-                % de los ingresos del período.
-              </p>
-            ) : (
-              <p style={{ margin: 0, fontSize: 12, color: "#9ca3af" }}>
-                Aún no hay ventas en el período para calcular el porcentaje.
-              </p>
-            )}
+            </div>
+            <div className="card-kpi-meta">
+              {porcentajeGastosSobreIngresosPeriodo != null ? (
+                <>
+                  Gastos ={" "}
+                  {porcentajeGastosSobreIngresosPeriodo
+                    .toFixed(1)
+                    .replace(".", ",")}
+                  % de los ingresos del período.
+                </>
+              ) : (
+                <>Aún no hay ventas en el período para calcular el porcentaje.</>
+              )}
+            </div>
           </div>
         </div>
 
         {/* Resumen textual período */}
-        <div
-          style={{
-            border: "1px dashed #4b5563",
-            borderRadius: 8,
-            padding: 12,
-            maxWidth: 600,
-          }}
-        >
+        <div className="card balance-period-summary">
           {hayFiltroFecha() ? (
-            <p style={{ margin: 0, fontSize: 14 }}>
+            <p>
               Entre{" "}
               <strong>
                 {fechaDesde ? formatFechaFiltro(fechaDesde) : "el inicio"}
@@ -645,24 +588,20 @@ export default function Balance() {
                 {fechaHasta ? formatFechaFiltro(fechaHasta) : "hoy"}
               </strong>
               , tu resultado neto fue de{" "}
-              <strong
-                style={{
-                  color: colorPorValor(resultadoNetoPeriodo),
-                }}
-              >
+              <strong className={clasePorValor(resultadoNetoPeriodo)}>
                 {formatMontoConSigno(resultadoNetoPeriodo)} ARS
               </strong>
               .
             </p>
           ) : (
-            <p style={{ margin: 0, fontSize: 14 }}>
+            <p>
               Sin filtros de fecha, este resumen es el mismo que verías en el{" "}
               <strong>Dashboard</strong>, pero con este layout centrado en
               períodos.
             </p>
           )}
         </div>
-      </div>
+      </section>
     );
   }
 
@@ -674,13 +613,13 @@ export default function Balance() {
     const totalGastosNum = totalGastos || 0;
     const totalIngresosNum = totalIngresos || 0;
 
-    // 🔔 Alertas calculadas en base a los datos existentes
+    // 🔔 Alertas
     const feriasNegativas = (balancePorFeria || []).filter((f) => f.neto < 0);
     const feriasMargenBajo = (balancePorFeria || []).filter((f) => {
       if (f.neto < 0) return false;
       if (!f.ingresos || f.ingresos <= 0) return false;
       const margen = (f.neto / f.ingresos) * 100;
-      return margen >= 0 && margen < 15; // margen menor al 15%
+      return margen >= 0 && margen < 15;
     });
 
     const tieneAlertaGlobalNegativa = resultadoNeto < 0;
@@ -698,8 +637,7 @@ export default function Balance() {
       .sort((a, b) => a.neto - b.neto)
       .slice(0, 3)
       .map(
-        (f) =>
-          `${f.nombre} (${formatMontoConSigno(f.neto)} ARS)`
+        (f) => `${f.nombre} (${formatMontoConSigno(f.neto)} ARS)`,
       )
       .join(" · ");
 
@@ -719,23 +657,21 @@ export default function Balance() {
       .join(" · ");
 
     // 📊 Insights adicionales
-
-    // Top 3 productos – concentración de ingresos
     const top3Productos = (rankingProductos || []).slice(0, 3);
     const ingresosTop3 = top3Productos.reduce(
       (acc, p) => acc + (p.ingresos || 0),
-      0
+      0,
     );
     const porcentajeTop3 =
       totalIngresosNum > 0 ? (ingresosTop3 / totalIngresosNum) * 100 : null;
 
-    // Canal principal de ingresos
     let canalPrincipal = null;
     let porcentajeCanalPrincipal = null;
     if (resumenCanales && resumenCanales.length > 0 && totalIngresosNum > 0) {
-      canalPrincipal = resumenCanales.reduce((acc, c) =>
-        !acc || c.ingresos > acc.ingresos ? c : acc
-      , null);
+      canalPrincipal = resumenCanales.reduce(
+        (acc, c) => (!acc || c.ingresos > acc.ingresos ? c : acc),
+        null,
+      );
       if (canalPrincipal) {
         porcentajeCanalPrincipal =
           (canalPrincipal.ingresos / totalIngresosNum) * 100;
@@ -750,88 +686,60 @@ export default function Balance() {
       return canal || "Sin canal";
     }
 
-    // Mejor / peor feria
     let mejorFeria = null;
     let peorFeria = null;
     if (balancePorFeria && balancePorFeria.length > 0) {
-      mejorFeria = balancePorFeria.reduce((acc, f) =>
-        !acc || f.neto > acc.neto ? f : acc
-      , null);
-      peorFeria = balancePorFeria.reduce((acc, f) =>
-        !acc || f.neto < acc.neto ? f : acc
-      , null);
+      mejorFeria = balancePorFeria.reduce(
+        (acc, f) => (!acc || f.neto > acc.neto ? f : acc),
+        null,
+      );
+      peorFeria = balancePorFeria.reduce(
+        (acc, f) => (!acc || f.neto < acc.neto ? f : acc),
+        null,
+      );
     }
 
-    // Mejor / peor mes (últimos 6)
     let mejorMes = null;
     let peorMes = null;
     if (ingresosPorMes && ingresosPorMes.length > 0) {
-      mejorMes = ingresosPorMes.reduce((acc, m) =>
-        !acc || m.ingresos > acc.ingresos ? m : acc
-      , null);
-      peorMes = ingresosPorMes.reduce((acc, m) =>
-        !acc || m.ingresos < acc.ingresos ? m : acc
-      , null);
+      mejorMes = ingresosPorMes.reduce(
+        (acc, m) => (!acc || m.ingresos > acc.ingresos ? m : acc),
+        null,
+      );
+      peorMes = ingresosPorMes.reduce(
+        (acc, m) => (!acc || m.ingresos < acc.ingresos ? m : acc),
+        null,
+      );
     }
 
+    const dataGastosPorTipo = gastosPorTipo.map((g) => ({
+      name: g.tipo,
+      value: g.monto,
+    }));
+
+    const dataCanales = resumenCanales.map((c) => ({
+      name: labelCanal(c.canal),
+      value: c.ingresos,
+    }));
+
     return (
-      <div
-        style={{
-          marginTop: 24,
-          display: "flex",
-          flexDirection: "column",
-          gap: 24,
-        }}
-      >
-        {/* 🔔 Bloque de alertas */}
+      <section className="balance-section balance-section-dashboard">
+        {/* Alertas del negocio */}
         <div
-          style={{
-            border: "1px solid #4b5563",
-            borderRadius: 8,
-            padding: 12,
-            backgroundColor: hayAlertas ? "#111827" : "#022c22",
-          }}
+          className={`card balance-alerts ${
+            hayAlertas ? "balance-alerts--danger" : "balance-alerts--ok"
+          }`}
         >
-          <p
-            style={{
-              margin: "0 0 6px",
-              fontSize: 13,
-              fontWeight: 600,
-              display: "flex",
-              alignItems: "center",
-              gap: 6,
-            }}
-          >
-            <span>🔔 Alertas del negocio</span>
-          </p>
+          <p className="balance-alerts-title">🔔 Alertas del negocio</p>
 
           {!hayAlertas ? (
-            <p
-              style={{
-                margin: 0,
-                fontSize: 13,
-                color: "#6ee7b7",
-              }}
-            >
+            <p className="balance-alerts-text-ok">
               Todo en orden, no hay alertas por ahora ✨
             </p>
           ) : (
-            <ul
-              style={{
-                margin: 0,
-                paddingLeft: 18,
-                fontSize: 13,
-                display: "flex",
-                flexDirection: "column",
-                gap: 4,
-              }}
-            >
+            <ul className="balance-alerts-list">
               {tieneAlertaGlobalNegativa && (
-                <li
-                  style={{
-                    color: "#fca5a5",
-                  }}
-                >
+                <li className="balance-alerts-item balance-alerts-item--danger">
                   Resultado global negativo:{" "}
                   <strong>
                     {formatMontoConSigno(resultadoNeto)} ARS
@@ -841,11 +749,7 @@ export default function Balance() {
               )}
 
               {tieneAlertaGastoAlto && (
-                <li
-                  style={{
-                    color: "#f97316",
-                  }}
-                >
+                <li className="balance-alerts-item balance-alerts-item--warning">
                   Los gastos representan el{" "}
                   <strong>
                     {porcentajeGastosSobreIngresos
@@ -858,11 +762,7 @@ export default function Balance() {
               )}
 
               {feriasNegativas.length > 0 && (
-                <li
-                  style={{
-                    color: "#fecaca",
-                  }}
-                >
+                <li className="balance-alerts-item balance-alerts-item--danger-soft">
                   Ferias en negativo:{" "}
                   <strong>{feriasNegativasTexto}</strong>
                   {feriasNegativas.length > 3 && " …"}
@@ -870,11 +770,7 @@ export default function Balance() {
               )}
 
               {feriasMargenBajo.length > 0 && (
-                <li
-                  style={{
-                    color: "#facc15",
-                  }}
-                >
+                <li className="balance-alerts-item balance-alerts-item--warning">
                   Ferias con margen muy ajustado:{" "}
                   <strong>{feriasMargenBajoTexto}</strong>
                   {feriasMargenBajo.length > 3 && " …"}
@@ -884,81 +780,37 @@ export default function Balance() {
           )}
         </div>
 
-        {/* 📊 Bloque de insights rápidos */}
-        <div
-          style={{
-            display: "flex",
-            flexWrap: "wrap",
-            gap: 16,
-          }}
-        >
-          {/* Top 3 productos */}
-          <div
-            style={{
-              flex: "1 1 240px",
-              minWidth: 240,
-              border: "1px solid #4b5563",
-              borderRadius: 8,
-              padding: 12,
-            }}
-          >
-            <p style={{ margin: 0, fontSize: 12, color: "#9ca3af" }}>
-              Concentración de productos
-            </p>
+        {/* Insights rápidos */}
+        <div className="balance-grid balance-grid--4">
+          <div className="card balance-card">
+            <p className="balance-card-label">Concentración de productos</p>
             {porcentajeTop3 != null && top3Productos.length > 0 ? (
               <>
-                <p
-                  style={{
-                    margin: "4px 0",
-                    fontSize: 13,
-                  }}
-                >
+                <p className="balance-card-text">
                   Tus <strong>3 productos top</strong> concentran{" "}
                   <strong>
                     {porcentajeTop3.toFixed(1).replace(".", ",")}%
                   </strong>{" "}
                   de los ingresos.
                 </p>
-                <p
-                  style={{
-                    margin: 0,
-                    fontSize: 11,
-                    color: "#9ca3af",
-                  }}
-                >
+                <p className="balance-card-meta">
                   Ingresos top 3: ${formatMonto(ingresosTop3)} ARS
                 </p>
               </>
             ) : (
-              <p style={{ margin: "4px 0 0", fontSize: 13, color: "#9ca3af" }}>
+              <p className="balance-card-meta">
                 Todavía no hay suficientes ventas para calcularlo.
               </p>
             )}
           </div>
 
-          {/* Canal principal */}
-          <div
-            style={{
-              flex: "1 1 240px",
-              minWidth: 240,
-              border: "1px solid #4b5563",
-              borderRadius: 8,
-              padding: 12,
-            }}
-          >
-            <p style={{ margin: 0, fontSize: 12, color: "#9ca3af" }}>
-              Canal principal de ingresos
-            </p>
+          <div className="card balance-card">
+            <p className="balance-card-label">Canal principal de ingresos</p>
             {canalPrincipal && porcentajeCanalPrincipal != null ? (
               <>
-                <p
-                  style={{
-                    margin: "4px 0",
-                    fontSize: 13,
-                  }}
-                >
-                  El canal <strong>{labelCanal(canalPrincipal.canal)}</strong>{" "}
-                  concentra{" "}
+                <p className="balance-card-text">
+                  El canal{" "}
+                  <strong>{labelCanal(canalPrincipal.canal)}</strong> concentra{" "}
                   <strong>
                     {porcentajeCanalPrincipal
                       .toFixed(1)
@@ -967,119 +819,71 @@ export default function Balance() {
                   </strong>{" "}
                   de tus ingresos.
                 </p>
-                <p
-                  style={{
-                    margin: 0,
-                    fontSize: 11,
-                    color: "#9ca3af",
-                  }}
-                >
+                <p className="balance-card-meta">
                   Ingresos por este canal: $
                   {formatMonto(canalPrincipal.ingresos)} ARS
                 </p>
               </>
             ) : (
-              <p style={{ margin: "4px 0 0", fontSize: 13, color: "#9ca3af" }}>
+              <p className="balance-card-meta">
                 Aún no hay datos suficientes por canal.
               </p>
             )}
           </div>
 
-          {/* Mejor / peor feria */}
-          <div
-            style={{
-              flex: "1 1 260px",
-              minWidth: 260,
-              border: "1px solid #4b5563",
-              borderRadius: 8,
-              padding: 12,
-            }}
-          >
-            <p style={{ margin: 0, fontSize: 12, color: "#9ca3af" }}>
-              Ferias destacadas
-            </p>
+          <div className="card balance-card">
+            <p className="balance-card-label">Ferias destacadas</p>
             {mejorFeria || peorFeria ? (
-              <div style={{ marginTop: 4, fontSize: 13 }}>
+              <div className="balance-card-text">
                 {mejorFeria && (
-                  <p style={{ margin: "0 0 4px" }}>
+                  <p className="balance-card-row">
                     🥇 Mejor feria:{" "}
                     <strong>{mejorFeria.nombre}</strong>{" "}
-                    <span
-                      style={{
-                        color: colorPorValor(mejorFeria.neto),
-                        fontWeight: 600,
-                      }}
-                    >
+                    <span className={clasePorValor(mejorFeria.neto)}>
                       ({formatMontoConSigno(mejorFeria.neto)} ARS)
                     </span>
                   </p>
                 )}
                 {peorFeria && (
-                  <p style={{ margin: 0 }}>
+                  <p className="balance-card-row">
                     🥶 Peor feria:{" "}
                     <strong>{peorFeria.nombre}</strong>{" "}
-                    <span
-                      style={{
-                        color: colorPorValor(peorFeria.neto),
-                        fontWeight: 600,
-                      }}
-                    >
+                    <span className={clasePorValor(peorFeria.neto)}>
                       ({formatMontoConSigno(peorFeria.neto)} ARS)
                     </span>
                   </p>
                 )}
               </div>
             ) : (
-              <p style={{ margin: "4px 0 0", fontSize: 13, color: "#9ca3af" }}>
+              <p className="balance-card-meta">
                 Todavía no hay datos de ferias suficientes.
               </p>
             )}
           </div>
 
-          {/* Mejor / peor mes */}
-          <div
-            style={{
-              flex: "1 1 260px",
-              minWidth: 260,
-              border: "1px solid #4b5563",
-              borderRadius: 8,
-              padding: 12,
-            }}
-          >
-            <p style={{ margin: 0, fontSize: 12, color: "#9ca3af" }}>
-              Meses más fuertes / flojos
-            </p>
+          <div className="card balance-card">
+            <p className="balance-card-label">Meses más fuertes / flojos</p>
             {mejorMes || peorMes ? (
-              <div style={{ marginTop: 4, fontSize: 13 }}>
+              <div className="balance-card-text">
                 {mejorMes && (
-                  <p style={{ margin: "0 0 4px" }}>
-                    📈 Mejor mes:{" "}
-                    <strong>{mejorMes.mes}</strong>{" "}
-                    <span
-                      style={{
-                        fontWeight: 600,
-                      }}
-                    >
+                  <p className="balance-card-row">
+                    📈 Mejor mes: <strong>{mejorMes.mes}</strong>{" "}
+                    <span>
                       (${formatMonto(mejorMes.ingresos)} ARS)
                     </span>
                   </p>
                 )}
                 {peorMes && (
-                  <p style={{ margin: 0 }}>
-                    📉 Mes más flojo:{" "}
-                    <strong>{peorMes.mes}</strong>{" "}
-                    <span
-                      style={{
-                        fontWeight: 600,
-                      }}
-                    >
+                  <p className="balance-card-row">
+                    📉 Mes más flojo: <strong>{peorMes.mes}</strong>{" "}
+                    <span>
                       (${formatMonto(peorMes.ingresos)} ARS)
                     </span>
                   </p>
                 )}
               </div>
             ) : (
-              <p style={{ margin: "4px 0 0", fontSize: 13, color: "#9ca3af" }}>
+              <p className="balance-card-meta">
                 Todavía no hay suficientes meses con ventas para comparar.
               </p>
             )}
@@ -1087,150 +891,84 @@ export default function Balance() {
         </div>
 
         {/* KPIs principales */}
-        <div
-          style={{
-            display: "flex",
-            flexWrap: "wrap",
-            gap: 16,
-          }}
-        >
-          {/* Ingresos */}
-          <div
-            style={{
-              flex: "1 1 200px",
-              minWidth: 200,
-              border: "1px solid #4b5563",
-              borderRadius: 8,
-              padding: 12,
-            }}
-          >
-            <p style={{ margin: 0, fontSize: 12, color: "#9ca3af" }}>
-              Ingresos totales
-            </p>
-            <p style={{ margin: "4px 0", fontSize: 20, fontWeight: "700" }}>
+        <div className="kpi-grid">
+          <div className="card-kpi">
+            <div className="card-kpi-header">
+              <span>Ingresos totales</span>
+            </div>
+            <div className="card-kpi-value">
               ${formatMonto(totalIngresos)} ARS
-            </p>
-            <p style={{ margin: 0, fontSize: 11, color: "#9ca3af" }}>
-              {cantidadVentas} ventas
-            </p>
+            </div>
+            <div className="card-kpi-meta">
+              {cantidadVentas} ventas registradas
+            </div>
           </div>
 
-          {/* Gastos */}
-          <div
-            style={{
-              flex: "1 1 200px",
-              minWidth: 200,
-              border: "1px solid #4b5563",
-              borderRadius: 8,
-              padding: 12,
-            }}
-          >
-            <p style={{ margin: 0, fontSize: 12, color: "#9ca3af" }}>
-              Gastos totales
-            </p>
-            <p style={{ margin: "4px 0", fontSize: 20, fontWeight: "700" }}>
+          <div className="card-kpi">
+            <div className="card-kpi-header">
+              <span>Gastos totales</span>
+            </div>
+            <div className="card-kpi-value">
               ${formatMonto(totalGastos)} ARS
-            </p>
-            <p style={{ margin: 0, fontSize: 11, color: "#9ca3af" }}>
+            </div>
+            <div className="card-kpi-meta">
               {cantidadGastos} movimientos de gasto
-            </p>
+            </div>
           </div>
 
-          {/* Resultado neto */}
-          <div
-            style={{
-              flex: "1 1 200px",
-              minWidth: 200,
-              border: "1px solid #4b5563",
-              borderRadius: 8,
-              padding: 12,
-            }}
-          >
-            <p style={{ margin: 0, fontSize: 12, color: "#9ca3af" }}>
-              Resultado neto
-            </p>
-            <p
-              style={{
-                margin: "4px 0",
-                fontSize: 20,
-                fontWeight: "700",
-                color: colorResultado(),
-              }}
-            >
+          <div className="card-kpi">
+            <div className="card-kpi-header">
+              <span>Resultado neto</span>
+            </div>
+            <div className={`card-kpi-value ${clasePorValor(resultadoNeto)}`}>
               {resultadoNeto >= 0 ? "" : "-"}$
               {formatMonto(Math.abs(resultadoNeto))} ARS
-            </p>
-            {porcentajeGastosSobreIngresos != null ? (
-              <p style={{ margin: 0, fontSize: 11, color: "#9ca3af" }}>
-                Gastos ={" "}
-                {porcentajeGastosSobreIngresos.toFixed(1).replace(".", ",")}
-                % de los ingresos.
-              </p>
-            ) : (
-              <p style={{ margin: 0, fontSize: 11, color: "#9ca3af" }}>
-                Sin ventas todavía para calcular proporción de gastos.
-              </p>
-            )}
+            </div>
+            <div className="card-kpi-meta">
+              {porcentajeGastosSobreIngresos != null ? (
+                <>
+                  Gastos ={" "}
+                  {porcentajeGastosSobreIngresos
+                    .toFixed(1)
+                    .replace(".", ",")}
+                  % de los ingresos.
+                </>
+              ) : (
+                <>Sin ventas todavía para calcular proporción de gastos.</>
+              )}
+            </div>
           </div>
 
-          {/* Ticket promedio */}
-          <div
-            style={{
-              flex: "1 1 200px",
-              minWidth: 200,
-              border: "1px solid #4b5563",
-              borderRadius: 8,
-              padding: 12,
-            }}
-          >
-            <p style={{ margin: 0, fontSize: 12, color: "#9ca3af" }}>
-              Ticket promedio
-            </p>
-            <p style={{ margin: "4px 0", fontSize: 20, fontWeight: "700" }}>
+          <div className="card-kpi">
+            <div className="card-kpi-header">
+              <span>Ticket promedio</span>
+            </div>
+            <div className="card-kpi-value">
               {cantidadVentas > 0
                 ? `$${formatMonto(ticketPromedio)} ARS`
                 : "-"}
-            </p>
-            <p style={{ margin: 0, fontSize: 11, color: "#9ca3af" }}>
+            </div>
+            <div className="card-kpi-meta">
               Promedio por venta registrada
-            </p>
+            </div>
           </div>
         </div>
 
-        {/* Fila 2: Top productos + Gastos por tipo */}
-        <div
-          style={{
-            display: "flex",
-            flexWrap: "wrap",
-            gap: 16,
-          }}
-        >
-          {/* Top productos */}
-          <div
-            style={{
-              flex: "1 1 320px",
-              minWidth: 320,
-              border: "1px solid #4b5563",
-              borderRadius: 8,
-              padding: 12,
-            }}
-          >
-            <h3 style={{ marginTop: 0, fontSize: 15 }}>Top productos</h3>
+        {/* Fila 1: Top productos + Modelos más vendidos */}
+        <div className="balance-grid balance-grid--2">
+          <div className="card balance-card">
+            <h3 className="balance-card-title">Top productos</h3>
             {rankingProductos.length === 0 ? (
-              <p style={{ fontSize: 13, color: "#9ca3af" }}>
+              <p className="balance-card-meta">
                 Todavía no hay ventas registradas.
               </p>
             ) : (
-              <table
-                border="1"
-                cellPadding="4"
-                style={{ fontSize: 12, width: "100%" }}
-              >
+              <table className="balance-table">
                 <thead>
                   <tr>
                     <th>Producto</th>
-                    <th>Unidades</th>
-                    <th>Ingresos</th>
+                    <th className="text-right">Unidades</th>
+                    <th className="text-right">Ingresos</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -1241,8 +979,8 @@ export default function Balance() {
                     return (
                       <tr key={r.productoId}>
                         <td>{nombreProd}</td>
-                        <td style={{ textAlign: "right" }}>{r.unidades}</td>
-                        <td style={{ textAlign: "right" }}>
+                        <td className="text-right">{r.unidades}</td>
+                        <td className="text-right">
                           ${formatMonto(r.ingresos)}
                         </td>
                       </tr>
@@ -1253,162 +991,29 @@ export default function Balance() {
             )}
           </div>
 
-          {/* Gastos por tipo */}
-          <div
-            style={{
-              flex: "1 1 320px",
-              minWidth: 320,
-              border: "1px solid #4b5563",
-              borderRadius: 8,
-              padding: 12,
-            }}
-          >
-            <h3 style={{ marginTop: 0, fontSize: 15 }}>Gastos por tipo</h3>
-            {gastosPorTipo.length === 0 ? (
-              <p style={{ fontSize: 13, color: "#9ca3af" }}>
-                Todavía no registraste gastos.
-              </p>
-            ) : (
-              <table
-                border="1"
-                cellPadding="4"
-                style={{ fontSize: 12, width: "100%" }}
-              >
-                <thead>
-                  <tr>
-                    <th>Tipo</th>
-                    <th>Registros</th>
-                    <th>Monto</th>
-                    <th>% gastos</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {gastosPorTipo.map((g) => {
-                    const porcentaje =
-                      totalGastosNum > 0
-                        ? (g.monto / totalGastosNum) * 100
-                        : 0;
-                    return (
-                      <tr key={g.tipo}>
-                        <td>{g.tipo}</td>
-                        <td style={{ textAlign: "right" }}>
-                          {g.registros}
-                        </td>
-                        <td style={{ textAlign: "right" }}>
-                          ${formatMonto(g.monto)}
-                        </td>
-                        <td style={{ textAlign: "right" }}>
-                          {porcentaje.toFixed(1).replace(".", ",")}%
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            )}
-          </div>
-        </div>
-
-        {/* Fila 3: Ventas por canal + Modelos/diseños */}
-        <div
-          style={{
-            display: "flex",
-            flexWrap: "wrap",
-            gap: 16,
-          }}
-        >
-          {/* Ventas por canal */}
-          <div
-            style={{
-              flex: "1 1 320px",
-              minWidth: 320,
-              border: "1px solid #4b5563",
-              borderRadius: 8,
-              padding: 12,
-            }}
-          >
-            <h3 style={{ marginTop: 0, fontSize: 15 }}>Ventas por canal</h3>
-            {resumenCanales.length === 0 ? (
-              <p style={{ fontSize: 13, color: "#9ca3af" }}>
-                Todavía no hay ventas registradas.
-              </p>
-            ) : (
-              <table
-                border="1"
-                cellPadding="4"
-                style={{ fontSize: 12, width: "100%" }}
-              >
-                <thead>
-                  <tr>
-                    <th>Canal</th>
-                    <th>Ventas</th>
-                    <th>Ingresos</th>
-                    <th>% ingresos</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {resumenCanales.map((c) => {
-                    const porcentaje =
-                      totalIngresos > 0
-                        ? (c.ingresos / totalIngresos) * 100
-                        : 0;
-
-                    let label = labelCanal(c.canal);
-
-                    return (
-                      <tr key={c.canal}>
-                        <td>{label}</td>
-                        <td style={{ textAlign: "right" }}>{c.ventas}</td>
-                        <td style={{ textAlign: "right" }}>
-                          ${formatMonto(c.ingresos)}
-                        </td>
-                        <td style={{ textAlign: "right" }}>
-                          {porcentaje.toFixed(1).replace(".", ",")}%
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            )}
-          </div>
-
-          {/* Modelos / diseños más vendidos */}
-          <div
-            style={{
-              flex: "1 1 320px",
-              minWidth: 320,
-              border: "1px solid #4b5563",
-              borderRadius: 8,
-              padding: 12,
-            }}
-          >
-            <h3 style={{ marginTop: 0, fontSize: 15 }}>
+          <div className="card balance-card">
+            <h3 className="balance-card-title">
               Modelos / diseños más vendidos
             </h3>
             {rankingModelos.length === 0 ? (
-              <p style={{ fontSize: 13, color: "#9ca3af" }}>
+              <p className="balance-card-meta">
                 Todavía no registraste ventas con detalle de modelo/diseño.
               </p>
             ) : (
-              <table
-                border="1"
-                cellPadding="4"
-                style={{ fontSize: 12, width: "100%" }}
-              >
+              <table className="balance-table">
                 <thead>
                   <tr>
                     <th>Modelo / diseño</th>
-                    <th>Unidades</th>
-                    <th>Ingresos</th>
+                    <th className="text-right">Unidades</th>
+                    <th className="text-right">Ingresos</th>
                   </tr>
                 </thead>
                 <tbody>
                   {rankingModelos.slice(0, 5).map((m) => (
                     <tr key={m.nombre}>
                       <td>{m.nombre}</td>
-                      <td style={{ textAlign: "right" }}>{m.unidades}</td>
-                      <td style={{ textAlign: "right" }}>
+                      <td className="text-right">{m.unidades}</td>
+                      <td className="text-right">
                         ${formatMonto(m.ingresos)}
                       </td>
                     </tr>
@@ -1419,118 +1024,155 @@ export default function Balance() {
           </div>
         </div>
 
-        {/* Fila 4: Ingresos por mes + Balance por feria */}
-        <div
-          style={{
-            display: "flex",
-            flexWrap: "wrap",
-            gap: 16,
-          }}
-        >
-          {/* Ingresos por mes */}
-          <div
-            style={{
-              flex: "1 1 320px",
-              minWidth: 320,
-              border: "1px solid #4b5563",
-              borderRadius: 8,
-              padding: 12,
-            }}
-          >
-            <h3 style={{ marginTop: 0, fontSize: 15 }}>
-              Ingresos por mes (últimos 6)
-            </h3>
-            {ingresosPorMes.length === 0 ? (
-              <p style={{ fontSize: 13, color: "#9ca3af" }}>
+        {/* Fila 2: Gastos por tipo + Ventas por canal (tortas) */}
+        <div className="balance-grid balance-grid--2">
+          <div className="card balance-card">
+            <h3 className="balance-card-title">Gastos por tipo</h3>
+            {gastosPorTipo.length === 0 ? (
+              <p className="balance-card-meta">
+                Todavía no registraste gastos.
+              </p>
+            ) : (
+              <div className="chart-wrapper">
+                <ResponsiveContainer width="100%" height={220}>
+                  <PieChart>
+                    <Pie
+                      data={dataGastosPorTipo}
+                      dataKey="value"
+                      nameKey="name"
+                      innerRadius={50}
+                      outerRadius={80}
+                      paddingAngle={2}
+                    >
+                      {dataGastosPorTipo.map((entry, index) => (
+                        <Cell
+                          key={entry.name}
+                          fill={
+                            CHART_COLORS[index % CHART_COLORS.length]
+                          }
+                        />
+                      ))}
+                    </Pie>
+                    <Tooltip
+                      formatter={(value) => `$${formatMonto(value)}`}
+                    />
+                    <Legend />
+                  </PieChart>
+                </ResponsiveContainer>
+              </div>
+            )}
+          </div>
+
+          <div className="card balance-card">
+            <h3 className="balance-card-title">Ventas por canal</h3>
+            {resumenCanales.length === 0 ? (
+              <p className="balance-card-meta">
                 Todavía no hay ventas registradas.
               </p>
             ) : (
-              <table
-                border="1"
-                cellPadding="4"
-                style={{ fontSize: 12, width: "100%" }}
-              >
-                <thead>
-                  <tr>
-                    <th>Mes</th>
-                    <th>Ingresos</th>
-                    <th>Ventas</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {ingresosPorMes.map((m) => (
-                    <tr key={m.mes}>
-                      <td>{m.mes}</td>
-                      <td style={{ textAlign: "right" }}>
-                        ${formatMonto(m.ingresos)}
-                      </td>
-                      <td style={{ textAlign: "right" }}>{m.ventas}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            )}
-          </div>
-
-          {/* Balance por feria */}
-          <div
-            style={{
-              flex: "1 1 320px",
-              minWidth: 320,
-              border: "1px solid #4b5563",
-              borderRadius: 8,
-              padding: 12,
-            }}
-          >
-            <h3 style={{ marginTop: 0, fontSize: 15 }}>Balance por feria</h3>
-            {balancePorFeria.length === 0 ? (
-              <p style={{ fontSize: 13, color: "#9ca3af" }}>
-                Aún no hay ventas o gastos asociados a ferias.
-              </p>
-            ) : (
-              <table
-                border="1"
-                cellPadding="4"
-                style={{ fontSize: 12, width: "100%" }}
-              >
-                <thead>
-                  <tr>
-                    <th>Feria</th>
-                    <th>Fecha</th>
-                    <th>Ingresos</th>
-                    <th>Gastos</th>
-                    <th>Resultado</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {balancePorFeria.map((f) => (
-                    <tr key={f.feriaId}>
-                      <td>{f.nombre}</td>
-                      <td>{f.fecha ? formatFechaCorta(f.fecha) : "-"}</td>
-                      <td style={{ textAlign: "right" }}>
-                        ${formatMonto(f.ingresos)}
-                      </td>
-                      <td style={{ textAlign: "right" }}>
-                        ${formatMonto(f.gastos)}
-                      </td>
-                      <td
-                        style={{
-                          textAlign: "right",
-                          color: colorPorValor(f.neto),
-                          fontWeight: 600,
-                        }}
-                      >
-                        {f.neto >= 0 ? "" : "-"}$
-                        {formatMonto(Math.abs(f.neto))}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+              <div className="chart-wrapper">
+                <ResponsiveContainer width="100%" height={220}>
+                  <PieChart>
+                    <Pie
+                      data={dataCanales}
+                      dataKey="value"
+                      nameKey="name"
+                      innerRadius={45}
+                      outerRadius={80}
+                      paddingAngle={3}
+                    >
+                      {dataCanales.map((entry, index) => (
+                        <Cell
+                          key={entry.name}
+                          fill={
+                            CHART_COLORS[index % CHART_COLORS.length]
+                          }
+                        />
+                      ))}
+                    </Pie>
+                    <Tooltip
+                      formatter={(value) => `$${formatMonto(value)}`}
+                    />
+                    <Legend />
+                  </PieChart>
+                </ResponsiveContainer>
+              </div>
             )}
           </div>
         </div>
-      </div>
+
+        {/* Fila 3: Ingresos por mes (solo) */}
+        <div className="card balance-card">
+          <h3 className="balance-card-title">
+            Ingresos por mes (últimos 6)
+          </h3>
+          {ingresosPorMes.length === 0 ? (
+            <p className="balance-card-meta">
+              Todavía no hay ventas registradas.
+            </p>
+          ) : (
+            <div className="chart-wrapper">
+              <ResponsiveContainer width="100%" height={240}>
+                <LineChart data={ingresosPorMes}>
+                  <XAxis dataKey="mes" />
+                  <YAxis />
+                  <Tooltip
+                    formatter={(value) => `$${formatMonto(value)}`}
+                  />
+                  <Line
+                    type="monotone"
+                    dataKey="ingresos"
+                    stroke="#38bdf8"
+                    strokeWidth={2}
+                  />
+                </LineChart>
+              </ResponsiveContainer>
+            </div>
+          )}
+        </div>
+
+        {/* Fila 4: Balance por feria (solo) */}
+        <div className="card balance-card">
+          <h3 className="balance-card-title">Balance por feria</h3>
+          {balancePorFeria.length === 0 ? (
+            <p className="balance-card-meta">
+              Aún no hay ventas o gastos asociados a ferias.
+            </p>
+          ) : (
+            <table className="balance-table">
+              <thead>
+                <tr>
+                  <th>Feria</th>
+                  <th>Fecha</th>
+                  <th className="text-right">Ingresos</th>
+                  <th className="text-right">Gastos</th>
+                  <th className="text-right">Resultado</th>
+                </tr>
+              </thead>
+              <tbody>
+                {balancePorFeria.map((f) => (
+                  <tr key={f.feriaId}>
+                    <td>{f.nombre}</td>
+                    <td>{f.fecha ? formatFechaCorta(f.fecha) : "-"}</td>
+                    <td className="text-right">
+                      ${formatMonto(f.ingresos)}
+                    </td>
+                    <td className="text-right">
+                      ${formatMonto(f.gastos)}
+                    </td>
+                    <td
+                      className={`text-right ${clasePorValor(f.neto)}`}
+                    >
+                      {f.neto >= 0 ? "" : "-"}$
+                      {formatMonto(Math.abs(f.neto))}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
+        </div>
+      </section>
     );
   }
 
@@ -1539,42 +1181,35 @@ export default function Balance() {
   // ============================
 
   return (
-    <div>
-      <h1>Balance</h1>
+    <div className="balance-page">
+      <PageHeader
+        title="Balance & Dashboard"
+        subtitle="Resumen financiero de OBSIDIAN: ingresos, gastos, ferias y canales."
+      />
 
-      {loading && <p>Cargando...</p>}
-      {error && <p style={{ color: "red" }}>{error}</p>}
+      {loading && (
+        <div className="alert alert--info">
+          Cargando datos de balance...
+        </div>
+      )}
+      {error && (
+        <div className="alert alert--error">{error}</div>
+      )}
 
       {/* Navegación interna de secciones */}
-      <div
-        style={{
-          marginTop: 8,
-          padding: 8,
-          borderRadius: 8,
-          border: "1px solid #4b5563",
-          maxWidth: 600,
-        }}
-      >
-        <p style={{ margin: "0 0 6px", fontSize: 13 }}>Secciones</p>
-        <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+      <div className="card balance-tabs-card">
+        <p className="balance-label">Secciones</p>
+        <div className="balance-tabs">
           {SECCIONES.map((sec) => (
             <button
               key={sec.id}
               type="button"
+              className={
+                seccionActiva === sec.id
+                  ? "balance-tab is-active"
+                  : "balance-tab"
+              }
               onClick={() => setSeccionActiva(sec.id)}
-              style={{
-                padding: "6px 10px",
-                borderRadius: 999,
-                border:
-                  seccionActiva === sec.id
-                    ? "1px solid #4f46e5"
-                    : "1px solid #4b5563",
-                backgroundColor:
-                  seccionActiva === sec.id ? "#4f46e5" : "transparent",
-                color: seccionActiva === sec.id ? "#fff" : "inherit",
-                cursor: "pointer",
-                fontSize: 12,
-              }}
             >
               {sec.label}
             </button>

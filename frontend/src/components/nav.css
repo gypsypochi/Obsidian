@@ -6,6 +6,7 @@
   display: flex;
   flex-direction: column;
   justify-content: space-between;
+
   padding: var(--space-lg) var(--space-md);
   background: radial-gradient(
       circle at top left,
@@ -19,8 +20,10 @@
     ),
     var(--color-surface);
   border-right: 1px solid rgba(148, 163, 184, 0.25);
-  min-height: 100vh;
+
   width: 260px;
+  height: 100vh; /* ocupa toda la altura, no scrollea */
+  box-sizing: border-box;
 }
 
 /* Header con logo y nombre */
@@ -44,7 +47,13 @@
 
 .sidebar-logo-gem {
   font-size: 1.4rem;
-  color: #fff;
+  color: var(--text-primary);
+}
+
+.sidebar-logo-img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
 }
 
 .sidebar-title {
@@ -93,7 +102,7 @@
 }
 
 .sidebar-section-toggle:hover {
-  color: #fff;
+  color: var(--text-primary);
 }
 
 /* Caret que rota */
@@ -135,8 +144,8 @@
 }
 
 .sidebar-link:hover {
-  background-color: rgba(15, 23, 42, 0.85);
-  color: #e5e7eb;
+  background-color: var(--color-surface-alt);
+  color: var(--text-primary);
 }
 
 .sidebar-link.is-active {
@@ -145,7 +154,7 @@
     rgba(139, 92, 246, 0.9),
     rgba(56, 189, 248, 0.9)
   );
-  color: #ffffff;
+  color: var(--text-primary);
   transform: translateY(-1px);
 }
 
@@ -161,24 +170,14 @@
   color: var(--text-muted);
 }
 
-.sidebar-logo-img {
-  width: 100%;
-  height: 100%;
-  object-fit: contain;
-}
-
-
 /* ===========================
    Responsive básico
    =========================== */
 
 @media (max-width: 900px) {
-  .app-layout {
-    grid-template-columns: 220px minmax(0, 1fr);
-  }
-
   .sidebar {
-    width: 220px;
+    width: 100%;
+    height: auto;
     padding: var(--space-md);
   }
 
