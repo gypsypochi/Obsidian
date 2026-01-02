@@ -10,11 +10,13 @@ import {
   uploadPlancha,
   getProducciones,
 } from "../api";
+import LayoutModels from "../components/layout-models/layout-models";
+import { FormSection } from "../components/form/form";
 
 export default function Modelos() {
   const [modelos, setModelos] = useState([]);
   const [productos, setProductos] = useState([]);
-  const [producciones, setProducciones] = useState([]); // 🔹 producciones para stats
+  const [producciones, setProducciones] = useState([]);
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -25,10 +27,8 @@ export default function Modelos() {
     categoria: "",
     subcategoria: "",
     nombreModelo: "",
-    codigoInterno: "",
     imagenRef: "",
     archivoPlancha: "",
-    notas: "",
   });
 
   const [editId, setEditId] = useState(null);
@@ -37,10 +37,8 @@ export default function Modelos() {
     categoria: "",
     subcategoria: "",
     nombreModelo: "",
-    codigoInterno: "",
     imagenRef: "",
     archivoPlancha: "",
-    notas: "",
   });
 
   // Filtros
@@ -57,7 +55,7 @@ export default function Modelos() {
       const [mods, prods, prodsHist] = await Promise.all([
         getModelos(),
         getProductos(),
-        getProducciones(), // 🔹 ahora también traemos producciones
+        getProducciones(),
       ]);
       setModelos(mods);
       setProductos(prods);
@@ -82,7 +80,6 @@ export default function Modelos() {
     }));
   }
 
-  // SUBIDA DE ARCHIVOS (ALTA)
   async function handleImagenFileChange(e) {
     const file = e.target.files[0];
     if (!file) return;
@@ -146,10 +143,8 @@ export default function Modelos() {
         categoria: "",
         subcategoria: "",
         nombreModelo: "",
-        codigoInterno: "",
         imagenRef: "",
         archivoPlancha: "",
-        notas: "",
       });
       await load();
     } catch (e) {
@@ -165,10 +160,8 @@ export default function Modelos() {
       categoria: m.categoria || "",
       subcategoria: m.subcategoria || "",
       nombreModelo: m.nombreModelo || "",
-      codigoInterno: m.codigoInterno || "",
       imagenRef: m.imagenRef || "",
       archivoPlancha: m.archivoPlancha || "",
-      notas: m.notas || "",
     });
   }
 
@@ -179,10 +172,8 @@ export default function Modelos() {
       categoria: "",
       subcategoria: "",
       nombreModelo: "",
-      codigoInterno: "",
       imagenRef: "",
       archivoPlancha: "",
-      notas: "",
     });
   }
 
@@ -194,7 +185,6 @@ export default function Modelos() {
     }));
   }
 
-  // SUBIDA DE ARCHIVOS (EDICIÓN)
   async function handleImagenFileChangeEdit(e) {
     const file = e.target.files[0];
     if (!file) return;
@@ -300,7 +290,6 @@ export default function Modelos() {
     [modelos]
   );
 
-  // 🔹 NUEVO: stats por modelo basadas en producciones
   const mapaStatsModelos = useMemo(() => {
     const map = new Map();
 
@@ -329,10 +318,8 @@ export default function Modelos() {
   // ---------- FILTROS ----------
   const modelosFiltrados = useMemo(() => {
     return modelos.filter((m) => {
-      // Filtro por producto base
       if (fProductoBase && m.productoId !== fProductoBase) return false;
 
-      // Filtro por categoría
       if (
         fCategoria.trim() &&
         !String(m.categoria || "")
@@ -342,7 +329,6 @@ export default function Modelos() {
         return false;
       }
 
-      // Filtro por subcategoría
       if (
         fSubcategoria.trim() &&
         !String(m.subcategoria || "")
@@ -352,14 +338,9 @@ export default function Modelos() {
         return false;
       }
 
-      // Búsqueda por texto
       if (fTexto.trim()) {
         const term = fTexto.trim().toLowerCase();
-        const textoBusqueda = [
-          m.nombreModelo || "",
-          m.codigoInterno || "",
-          m.notas || "",
-        ]
+        const textoBusqueda = [m.nombreModelo || ""]
           .join(" ")
           .toLowerCase();
 
@@ -372,473 +353,471 @@ export default function Modelos() {
 
   // ---------- RENDER ----------
   return (
-    <div>
-      <h1>Modelos / Diseños</h1>
-
-      {loading && <p>Cargando...</p>}
-      {error && <p style={{ color: "red" }}>{error}</p>}
-      {mensaje && <p style={{ color: "green" }}>{mensaje}</p>}
-
-      <h2>Nuevo modelo</h2>
-      <form onSubmit={onSubmit}>
-        <div>
-          <label>Producto base *</label>
-          <select
-            name="productoId"
-            value={form.productoId}
-            onChange={onFormChange}
-            required
-          >
-            <option value="">-- elegir producto --</option>
-            {productos.map((p) => (
-              <option key={p.id} value={p.id}>
-                {p.nombre} (cat: {p.categoria || "-"})
-              </option>
-            ))}
-          </select>
+    <LayoutModels
+      title="Modelos / Diseños"
+      description="Gestioná las planchas y diseños asociadas a tus productos base, con filtros por categoría, subcategoría y estadísticas de producción."
+    >
+      <div className="models-page">
+        {/* Mensajes */}
+        <div className="models-status">
+          {loading && (
+            <p className="models-message">Cargando modelos...</p>
+          )}
+          {error && (
+            <p className="models-message models-message--error">
+              {error}
+            </p>
+          )}
+          {mensaje && (
+            <p className="models-message models-message--success">
+              {mensaje}
+            </p>
+          )}
         </div>
 
-        <div>
-          <label>Categoría</label>
-          <input
-            name="categoria"
-            value={form.categoria}
-            onChange={onFormChange}
-            placeholder="Ej: Anime, Películas, Memes"
-          />
-        </div>
+        {/* ALTA */}
+        <section className="models-section">
+          <div className="models-form-wrapper">
+            <FormSection
+              title="Nuevo modelo"
+              description="Creá una nueva plancha/modelo y asociála a un producto base."
+              onSubmit={onSubmit}
+            >
+              <div className="models-form">
+                {/* FILA 1: 4 campos en una línea */}
+                <div className="models-form-grid">
+                  <div className="form-field">
+                    <label>Producto base *</label>
+                    <select
+                      name="productoId"
+                      value={form.productoId}
+                      onChange={onFormChange}
+                      required
+                    >
+                      <option value="">-- elegir producto --</option>
+                      {productos.map((p) => (
+                        <option key={p.id} value={p.id}>
+                          {p.nombre} (cat: {p.categoria || "-"})
+                        </option>
+                      ))}
+                    </select>
+                  </div>
 
-        <div>
-          <label>Subcategoría</label>
-          <input
-            name="subcategoria"
-            value={form.subcategoria}
-            onChange={onFormChange}
-            placeholder="Ej: Harry Potter, Memes argentinos"
-          />
-        </div>
-
-        <div>
-          <label>Nombre del modelo / plancha *</label>
-          <input
-            name="nombreModelo"
-            value={form.nombreModelo}
-            onChange={onFormChange}
-            required
-            placeholder="Ej: HP - Tapa 1, Anime Plancha 2"
-          />
-        </div>
-
-        <div>
-          <label>Código interno (opcional)</label>
-          <input
-            name="codigoInterno"
-            value={form.codigoInterno}
-            onChange={onFormChange}
-            placeholder="Ej: ST-HP-01"
-          />
-        </div>
-
-        <div>
-          <label>Imagen (URL o archivo)</label>
-          <input
-            name="imagenRef"
-            value={form.imagenRef}
-            onChange={onFormChange}
-            placeholder="URL (opcional si subís archivo)"
-          />
-          <div>
-            <input
-              type="file"
-              accept="image/*"
-              onChange={handleImagenFileChange}
-            />
-          </div>
-        </div>
-
-        <div>
-          <label>Archivo plancha (PDF / imprimible)</label>
-          <input
-            name="archivoPlancha"
-            value={form.archivoPlancha}
-            onChange={onFormChange}
-            placeholder="URL (opcional si subís archivo)"
-          />
-          <div>
-            <input
-              type="file"
-              accept="application/pdf"
-              onChange={handlePlanchaFileChange}
-            />
-          </div>
-        </div>
-
-        <div>
-          <label>Notas</label>
-          <textarea
-            name="notas"
-            value={form.notas}
-            onChange={onFormChange}
-            placeholder="Qué contiene la plancha / tapa, variantes, etc."
-          />
-        </div>
-
-        <button type="submit">Crear modelo</button>
-        <button type="button" onClick={load} style={{ marginLeft: 8 }}>
-          Recargar
-        </button>
-      </form>
-
-      <h2>Catálogo de modelos</h2>
-
-      <div style={{ marginBottom: 12 }}>
-        <label style={{ marginRight: 8 }}>
-          Producto base:
-          <select
-            value={fProductoBase}
-            onChange={(e) => setFProductoBase(e.target.value)}
-          >
-            <option value="">Todos</option>
-            {productos.map((p) => (
-              <option key={p.id} value={p.id}>
-                {p.nombre}
-              </option>
-            ))}
-          </select>
-        </label>
-
-        <label style={{ marginRight: 8 }}>
-          Categoría:
-          <input
-            value={fCategoria}
-            onChange={(e) => setFCategoria(e.target.value)}
-            placeholder="Anime / Películas / Memes..."
-            list="categoriasOptions"
-          />
-          <datalist id="categoriasOptions">
-            {opcionesCategoria.map((cat) => (
-              <option key={cat} value={cat} />
-            ))}
-          </datalist>
-        </label>
-
-        <label style={{ marginRight: 8 }}>
-          Subcategoría:
-          <input
-            value={fSubcategoria}
-            onChange={(e) => setFSubcategoria(e.target.value)}
-            placeholder="Harry Potter / Flork..."
-            list="subcategoriasOptions"
-          />
-          <datalist id="subcategoriasOptions">
-            {opcionesSubcategoria.map((sub) => (
-              <option key={sub} value={sub} />
-            ))}
-          </datalist>
-        </label>
-
-        <label>
-          Buscar:
-          <input
-            value={fTexto}
-            onChange={(e) => setFTexto(e.target.value)}
-            placeholder="Nombre, código, notas..."
-          />
-        </label>
-
-        <button
-          type="button"
-          onClick={handleClearFilters}
-          style={{ marginLeft: 8 }}
-        >
-          Limpiar filtros
-        </button>
-      </div>
-
-      <div
-        style={{
-          display: "flex",
-          flexWrap: "wrap",
-          gap: 16,
-        }}
-      >
-        {modelosFiltrados.map((m) => {
-          const prod = mapaProductos.get(m.productoId);
-          const isEditing = editId === m.id;
-
-          if (isEditing) {
-            return (
-              <div
-                key={m.id}
-                style={{
-                  border: "1px solid #4b5563",
-                  padding: 12,
-                  width: 280,
-                  background: "#111827",
-                  color: "#f9fafb",
-                  borderRadius: 4,
-                }}
-              >
-                <h3 style={{ marginBottom: 8, color: "#f9fafb" }}>
-                  Editar modelo
-                </h3>
-
-                <div>
-                  <label>Producto base</label>
-                  <select
-                    name="productoId"
-                    value={editForm.productoId}
-                    onChange={onEditChange}
-                  >
-                    <option value="">-- elegir producto --</option>
-                    {productos.map((p) => (
-                      <option key={p.id} value={p.id}>
-                        {p.nombre} (cat: {p.categoria || "-"})
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                <div>
-                  <label>Categoría</label>
-                  <input
-                    name="categoria"
-                    value={editForm.categoria}
-                    onChange={onEditChange}
-                  />
-                </div>
-
-                <div>
-                  <label>Subcategoría</label>
-                  <input
-                    name="subcategoria"
-                    value={editForm.subcategoria}
-                    onChange={onEditChange}
-                  />
-                </div>
-
-                <div>
-                  <label>Nombre modelo</label>
-                  <input
-                    name="nombreModelo"
-                    value={editForm.nombreModelo}
-                    onChange={onEditChange}
-                    required
-                  />
-                </div>
-
-                <div>
-                  <label>Código interno</label>
-                  <input
-                    name="codigoInterno"
-                    value={editForm.codigoInterno}
-                    onChange={onEditChange}
-                  />
-                </div>
-
-                <div>
-                  <label>Imagen (URL o archivo)</label>
-                  <input
-                    name="imagenRef"
-                    value={editForm.imagenRef}
-                    onChange={onEditChange}
-                  />
-                  <div>
+                  <div className="form-field">
+                    <label>Categoría</label>
                     <input
+                      name="categoria"
+                      value={form.categoria}
+                      onChange={onFormChange}
+                      placeholder="Ej: Anime, Películas, Memes"
+                    />
+                  </div>
+
+                  <div className="form-field">
+                    <label>Subcategoría</label>
+                    <input
+                      name="subcategoria"
+                      value={form.subcategoria}
+                      onChange={onFormChange}
+                      placeholder="Ej: Harry Potter, Memes argentinos"
+                    />
+                  </div>
+
+                  <div className="form-field">
+                    <label>Nombre del modelo / plancha *</label>
+                    <input
+                      name="nombreModelo"
+                      value={form.nombreModelo}
+                      onChange={onFormChange}
+                      required
+                      placeholder="Ej: HP - Tapa 1, Anime Plancha 2"
+                    />
+                  </div>
+                </div>
+
+                {/* FILA 2: botones de subida centrados */}
+                <div className="models-form-uploads-row">
+                  <div className="models-upload-group">
+                    <input
+                      id="modelo-imagen-nuevo"
                       type="file"
                       accept="image/*"
-                      onChange={handleImagenFileChangeEdit}
+                      onChange={handleImagenFileChange}
+                      className="upload-input"
                     />
+                    <label
+                      htmlFor="modelo-imagen-nuevo"
+                      className="upload-button"
+                    >
+                      <span className="upload-button-label">
+                        Subir portada
+                      </span>
+                    </label>
+                    {form.imagenRef && (
+                      <small className="upload-hint">
+                        Archivo listo para usar ✔
+                      </small>
+                    )}
                   </div>
-                </div>
 
-                <div>
-                  <label>Archivo plancha (PDF)</label>
-                  <input
-                    name="archivoPlancha"
-                    value={editForm.archivoPlancha}
-                    onChange={onEditChange}
-                  />
-                  <div>
+                  <div className="models-upload-group">
                     <input
+                      id="modelo-plancha-nuevo"
                       type="file"
                       accept="application/pdf"
-                      onChange={handlePlanchaFileChangeEdit}
+                      onChange={handlePlanchaFileChange}
+                      className="upload-input"
                     />
+                    <label
+                      htmlFor="modelo-plancha-nuevo"
+                      className="upload-button"
+                    >
+                      <span className="upload-button-label">
+                        Subir plancha
+                      </span>
+                    </label>
+                    {form.archivoPlancha && (
+                      <small className="upload-hint">
+                        PDF listo para imprimir ✔
+                      </small>
+                    )}
                   </div>
                 </div>
 
-                <div>
-                  <label>Notas</label>
-                  <textarea
-                    name="notas"
-                    value={editForm.notas}
-                    onChange={onEditChange}
-                  />
-                </div>
-
-                <div style={{ marginTop: 8 }}>
-                  <button type="button" onClick={saveEdit}>
-                    Guardar
+                {/* FILA 3: Crear / Recargar centrados */}
+                <div className="models-form-actions">
+                  <button type="submit" className="btn-primary">
+                    Crear modelo
                   </button>
                   <button
                     type="button"
-                    onClick={cancelEdit}
-                    style={{ marginLeft: 4 }}
+                    onClick={load}
+                    className="btn-secondary"
                   >
-                    Cancelar
+                    Recargar
                   </button>
                 </div>
               </div>
-            );
-          }
+            </FormSection>
+          </div>
+        </section>
 
-          const stats = mapaStatsModelos.get(m.id);
+        {/* CATÁLOGO */}
+        <section className="models-section">
+          <h2 className="models-subtitle">Catálogo de modelos</h2>
 
-          return (
-            <div
-              key={m.id}
-              style={{
-                border: "1px solid #4b5563",
-                padding: 12,
-                width: 280,
-                background: "#111827",
-                color: "#f9fafb",
-                borderRadius: 4,
-                boxShadow: "0 1px 2px rgba(0,0,0,0.3)",
-              }}
-            >
-              {/* Imagen preview clickeable */}
-              {m.imagenRef ? (
-                <a
-                  href={m.imagenRef}
-                  target="_blank"
-                  rel="noreferrer"
-                  title="Ver imagen en grande"
-                >
-                  <img
-                    src={m.imagenRef}
-                    alt={m.nombreModelo}
-                    style={{
-                      width: "100%",
-                      height: 150,
-                      objectFit: "cover",
-                      marginBottom: 8,
-                      borderRadius: 4,
-                    }}
-                  />
-                </a>
-              ) : (
-                <div
-                  style={{
-                    width: "100%",
-                    height: 150,
-                    background: "#4b5563",
-                    marginBottom: 8,
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    fontSize: 12,
-                    color: "#e5e7eb",
-                    borderRadius: 4,
-                  }}
-                >
-                  Sin imagen
-                </div>
-              )}
-
-              <strong
-                style={{
-                  display: "block",
-                  fontSize: 14,
-                  marginBottom: 2,
-                  color: "#f9fafb",
-                }}
+          <div className="models-filters">
+            <div className="form-field">
+              <label>Producto base</label>
+              <select
+                value={fProductoBase}
+                onChange={(e) => setFProductoBase(e.target.value)}
               >
-                {m.nombreModelo}
-              </strong>
-
-              <div style={{ fontSize: 13, color: "#e5e7eb" }}>
-                {m.categoria || "-"}
-                {m.subcategoria ? ` – ${m.subcategoria}` : ""}
-              </div>
-
-              <div
-                style={{
-                  fontSize: 12,
-                  color: "#d1d5db",
-                  marginTop: 4,
-                }}
-              >
-                Producto base: {prod ? prod.nombre : m.productoId}
-              </div>
-
-              {/* 🔹 Stats de producción por modelo */}
-              {stats && (
-                <div
-                  style={{
-                    fontSize: 12,
-                    color: "#bfdbfe",
-                    marginTop: 4,
-                  }}
-                >
-                  Producciones: {stats.veces} · Unidades totales:{" "}
-                  {stats.unidades}
-                </div>
-              )}
-
-              {m.codigoInterno && (
-                <div style={{ fontSize: 12, color: "#9ca3af" }}>
-                  Código: {m.codigoInterno}
-                </div>
-              )}
-
-              {m.notas && (
-                <p
-                  style={{
-                    fontSize: 12,
-                    color: "#e5e7eb",
-                    marginTop: 4,
-                    whiteSpace: "pre-wrap",
-                  }}
-                >
-                  {m.notas}
-                </p>
-              )}
-
-              {m.archivoPlancha && (
-                <div style={{ marginTop: 6 }}>
-                  <a
-                    href={m.archivoPlancha}
-                    target="_blank"
-                    rel="noreferrer"
-                    style={{ fontSize: 12, color: "#93c5fd" }}
-                  >
-                    Ver / imprimir plancha (PDF)
-                  </a>
-                </div>
-              )}
-
-              <div style={{ marginTop: 8 }}>
-                <button type="button" onClick={() => startEdit(m)}>
-                  Editar
-                </button>
-                <button
-                  type="button"
-                  onClick={() => onDelete(m.id)}
-                  style={{ marginLeft: 4 }}
-                >
-                  Eliminar
-                </button>
-              </div>
+                <option value="">Todos</option>
+                {productos.map((p) => (
+                  <option key={p.id} value={p.id}>
+                    {p.nombre}
+                  </option>
+                ))}
+              </select>
             </div>
-          );
-        })}
 
-        {!loading && modelosFiltrados.length === 0 && (
-          <p>No hay modelos cargados.</p>
-        )}
+            <div className="form-field">
+              <label>Categoría</label>
+              <input
+                value={fCategoria}
+                onChange={(e) => setFCategoria(e.target.value)}
+                placeholder="Anime / Películas / Memes..."
+                list="categoriasOptions"
+              />
+              <datalist id="categoriasOptions">
+                {opcionesCategoria.map((cat) => (
+                  <option key={cat} value={cat} />
+                ))}
+              </datalist>
+            </div>
+
+            <div className="form-field">
+              <label>Subcategoría</label>
+              <input
+                value={fSubcategoria}
+                onChange={(e) => setFSubcategoria(e.target.value)}
+                placeholder="Harry Potter / Flork..."
+                list="subcategoriasOptions"
+              />
+              <datalist id="subcategoriasOptions">
+                {opcionesSubcategoria.map((sub) => (
+                  <option key={sub} value={sub} />
+                ))}
+              </datalist>
+            </div>
+
+            <div className="form-field">
+              <label>Buscar</label>
+              <input
+                value={fTexto}
+                onChange={(e) => setFTexto(e.target.value)}
+                placeholder="Nombre..."
+              />
+            </div>
+
+            <div className="models-filters-clear">
+              <button
+                type="button"
+                onClick={handleClearFilters}
+                className="btn-secondary"
+              >
+                Limpiar filtros
+              </button>
+            </div>
+          </div>
+
+          <div className="models-grid">
+            {modelosFiltrados.map((m) => {
+              const prod = mapaProductos.get(m.productoId);
+              const isEditing = editId === m.id;
+              const stats = mapaStatsModelos.get(m.id);
+
+              const imagenInputId = `modelo-imagen-edit-${m.id}`;
+              const planchaInputId = `modelo-plancha-edit-${m.id}`;
+
+              if (isEditing) {
+                return (
+                  <div
+                    key={m.id}
+                    className="model-card model-card--editing"
+                  >
+                    <h3 className="model-card__title">
+                      Editar modelo
+                    </h3>
+                    <p className="model-card__meta">
+                      {m.categoria || "-"}
+                      {m.subcategoria ? ` – ${m.subcategoria}` : ""}
+                    </p>
+
+                    <div className="form-grid model-card__edit-grid">
+                      <div className="form-field">
+                        <label>Producto base</label>
+                        <select
+                          name="productoId"
+                          value={editForm.productoId}
+                          onChange={onEditChange}
+                        >
+                          <option value="">
+                            -- elegir producto --
+                          </option>
+                          {productos.map((p) => (
+                            <option key={p.id} value={p.id}>
+                              {p.nombre} (cat: {p.categoria || "-"})
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+
+                      <div className="form-field">
+                        <label>Categoría</label>
+                        <input
+                          name="categoria"
+                          value={editForm.categoria}
+                          onChange={onEditChange}
+                        />
+                      </div>
+
+                      <div className="form-field">
+                        <label>Subcategoría</label>
+                        <input
+                          name="subcategoria"
+                          value={editForm.subcategoria}
+                          onChange={onEditChange}
+                        />
+                      </div>
+
+                      <div className="form-field">
+                        <label>Nombre modelo</label>
+                        <input
+                          name="nombreModelo"
+                          value={editForm.nombreModelo}
+                          onChange={onEditChange}
+                          required
+                        />
+                      </div>
+
+                      <div className="form-field">
+                        <label>Imagen de portada</label>
+                        <div className="models-upload-inline">
+                          <input
+                            id={imagenInputId}
+                            type="file"
+                            accept="image/*"
+                            onChange={handleImagenFileChangeEdit}
+                            className="upload-input"
+                          />
+                          <label
+                            htmlFor={imagenInputId}
+                            className="upload-button upload-button--small"
+                          >
+                            <span className="upload-button-label">
+                              Cambiar imagen
+                            </span>
+                          </label>
+                        </div>
+                        {editForm.imagenRef && (
+                          <small className="upload-hint">
+                            Archivo listo ✔
+                          </small>
+                        )}
+                      </div>
+
+                      <div className="form-field">
+                        <label>Archivo de plancha (PDF)</label>
+                        <div className="models-upload-inline">
+                          <input
+                            id={planchaInputId}
+                            type="file"
+                            accept="application/pdf"
+                            onChange={handlePlanchaFileChangeEdit}
+                            className="upload-input"
+                          />
+                          <label
+                            htmlFor={planchaInputId}
+                            className="upload-button upload-button--small"
+                          >
+                            <span className="upload-button-label">
+                              Cambiar plancha
+                            </span>
+                          </label>
+                        </div>
+                        {editForm.archivoPlancha && (
+                          <small className="upload-hint">
+                            PDF listo ✔
+                          </small>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="model-card__edit-actions">
+                      <button
+                        type="button"
+                        onClick={saveEdit}
+                        className="btn-primary"
+                      >
+                        Guardar
+                      </button>
+                      <button
+                        type="button"
+                        onClick={cancelEdit}
+                        className="btn-secondary"
+                      >
+                        Cancelar
+                      </button>
+                    </div>
+                  </div>
+                );
+              }
+
+              return (
+                <div key={m.id} className="model-card">
+                  {/* Acciones flotantes (aparecen en hover) */}
+                  <div className="model-card__actions">
+                    <button
+                      type="button"
+                      onClick={() => startEdit(m)}
+                      className="icon-btn"
+                      title="Editar modelo"
+                    >
+                      ✏️
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => onDelete(m.id)}
+                      className="icon-btn icon-btn--danger"
+                      title="Eliminar modelo"
+                    >
+                      🗑️
+                    </button>
+                  </div>
+
+                  {/* Imagen */}
+                  <div className="model-card__image-wrapper">
+                    {m.imagenRef ? (
+                      <a
+                        href={m.imagenRef}
+                        target="_blank"
+                        rel="noreferrer"
+                        title="Ver imagen en grande"
+                      >
+                        <img
+                          src={m.imagenRef}
+                          alt={m.nombreModelo}
+                          className="model-card__image"
+                        />
+                      </a>
+                    ) : (
+                      <div className="model-card__image-placeholder">
+                        Sin imagen
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Texto centrado */}
+                  <div className="model-card__body">
+                    <h3 className="model-card__title">
+                      {m.nombreModelo}
+                    </h3>
+
+                    <div className="model-card__tags">
+                      {m.categoria && (
+                        <span className="model-card__tag model-card__tag--categoria">
+                          {m.categoria}
+                        </span>
+                      )}
+                      {m.subcategoria && (
+                        <span className="model-card__tag model-card__tag--subcategoria">
+                          {m.subcategoria}
+                        </span>
+                      )}
+                    </div>
+
+                    {prod && (
+                      <p className="model-card__product">
+                        Producto base: {prod.nombre}
+                      </p>
+                    )}
+                    {!prod && (
+                      <p className="model-card__product">
+                        Producto: {m.productoId}
+                      </p>
+                    )}
+
+                    {stats && (
+                      <p className="model-card__stats">
+                        Producciones: {stats.veces} · Unidades:{" "}
+                        {stats.unidades}
+                      </p>
+                    )}
+
+                    {m.archivoPlancha && (
+                      <p className="model-card__link">
+                        <a
+                          href={m.archivoPlancha}
+                          target="_blank"
+                          rel="noreferrer"
+                        >
+                          Ver / imprimir plancha (PDF)
+                        </a>
+                      </p>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+
+            {!loading && modelosFiltrados.length === 0 && (
+              <p className="models-empty">No hay modelos cargados.</p>
+            )}
+          </div>
+        </section>
       </div>
-    </div>
+    </LayoutModels>
   );
 }

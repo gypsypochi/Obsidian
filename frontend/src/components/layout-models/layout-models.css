@@ -1,0 +1,501 @@
+/* ================================
+   LAYOUT GENERAL MODELS / GALERÍA
+   ================================ */
+
+.models-layout {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+}
+
+.models-layout-header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-xs);
+  margin-bottom: 2px !important;
+  text-align: center;
+}
+
+.models-layout-title {
+  font-size: var(--font-size-2xl);
+  font-family: var(--font-title);
+}
+
+.models-layout-description {
+  font-size: var(--font-size-sm);
+  color: var(--text-secondary);
+  max-width: 680px;
+}
+
+.models-layout-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-sm);
+  align-items: center;
+  justify-content: center;
+}
+
+.models-layout-main {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+}
+
+/* ====================
+   PÁGINA DE MODELOS
+   ==================== */
+
+.models-page {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-lg);
+}
+
+/* Mensajes de estado */
+
+.models-status {
+  min-height: 1.25rem;
+}
+
+.models-message {
+  font-size: var(--font-size-sm);
+}
+
+.models-message--error {
+  color: var(--danger);
+}
+
+.models-message--success {
+  color: var(--secondary);
+}
+
+/* Secciones */
+
+.models-section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+}
+
+.models-subtitle {
+  margin: 0;
+  text-align: center;
+}
+
+/* ==========================
+   FORMULARIO NUEVO MODELO
+   ========================== */
+
+.models-form-wrapper {
+  text-align: center;
+}
+
+.models-form {
+  max-width: 980px;
+  margin: 2px auto 0 auto;
+  text-align: left;
+}
+
+/* FILA 1: 4 campos en una sola línea */
+
+.models-form-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--space-md);
+}
+
+/* FILA 2: subida de archivos centrada */
+
+.models-form-uploads-row {
+  margin-top: var(--space-md);
+  display: flex;
+  justify-content: center;
+  gap: var(--space-lg);
+  flex-wrap: wrap;
+}
+
+.models-upload-group {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-sm);
+  min-width: 180px;
+}
+
+/* inputs file ocultos */
+
+.upload-input {
+  display: none;
+}
+
+/* botón de subida estilo obsidiana */
+
+.upload-button {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  border: 1px solid rgba(148, 163, 184, 0.55);
+  background: radial-gradient(
+    circle at top,
+    rgba(129, 140, 248, 0.12),
+    rgba(15, 23, 42, 0.95)
+  );
+  cursor: pointer;
+  text-decoration: none;
+  overflow: hidden;
+  box-shadow: var(--shadow-soft);
+  backdrop-filter: blur(4px);
+}
+
+.upload-button:hover {
+  border-color: rgba(129, 140, 248, 0.9);
+}
+
+.upload-button-label {
+  padding: 0.45rem 0.95rem;
+  font-size: var(--font-size-sm);
+  white-space: nowrap;
+}
+
+/* versión pequeña en edición */
+
+.upload-button--small .upload-button-label {
+  padding-inline: 0.7rem;
+}
+
+.upload-hint {
+  font-size: var(--font-size-xs);
+  color: var(--text-secondary);
+}
+
+/* FILA 3: acciones centradas */
+
+.models-form-actions {
+  margin-top: var(--space-md);
+  display: flex;
+  justify-content: center;
+  gap: var(--space-md);
+}
+
+/* ==========================
+   FILTROS CATÁLOGO MODELOS
+   ========================== */
+
+.models-filters {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: var(--space-sm);
+  align-items: flex-end;
+  margin-bottom: var(--space-md);
+}
+
+.models-filters label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  font-size: var(--font-size-sm);
+  color: var(--text-secondary);
+}
+
+.models-filters-clear {
+  display: flex;
+  justify-content: flex-end;
+  align-items: flex-end;
+}
+
+/* ==========================
+   GRILLA DE TARJETAS
+   ========================== */
+
+.models-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: var(--space-md);
+}
+
+/* ==========================
+   TARJETAS DE MODELOS / FERIAS
+   ========================== */
+
+.model-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+  padding: var(--space-md);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface);
+  border: 1px solid rgba(148, 163, 184, 0.35);
+  box-shadow: var(--shadow-soft);
+  transition:
+    transform 0.12s ease,
+    box-shadow 0.12s ease,
+    border-color 0.12s ease;
+}
+
+.model-card:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 18px 40px rgba(15, 23, 42, 0.55);
+  border-color: rgba(129, 140, 248, 0.7);
+}
+
+.model-card--editing {
+  border-color: var(--secondary);
+  box-shadow: 0 0 0 1px var(--secondary);
+}
+
+/* Imagen */
+
+.model-card__image-wrapper {
+  width: 100%;
+  height: 160px;
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  background: var(--color-surface-alt);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.model-card__image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.model-card__image-placeholder {
+  font-size: var(--font-size-sm);
+  color: var(--text-secondary);
+  padding: var(--space-sm);
+}
+
+/* Contenido centrado */
+
+.model-card__body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  text-align: center;
+}
+
+.model-card__title {
+  font-size: var(--font-size-md);
+  font-weight: 600;
+}
+
+.model-card__meta {
+  font-size: var(--font-size-xs, 0.8rem);
+  color: var(--text-secondary);
+}
+
+.model-card__product {
+  font-size: var(--font-size-sm);
+  color: var(--text-secondary);
+}
+
+.model-card__stats {
+  font-size: var(--font-size-sm);
+  color: var(--secondary-light);
+}
+
+/* Chips */
+
+.model-card__tags {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  margin-top: 0.25rem;
+  margin-bottom: 0.25rem;
+}
+
+.model-card__tag {
+  font-size: var(--font-size-xs);
+  padding: 0.15rem 0.55rem;
+  border-radius: 999px;
+  border: 1px solid rgba(148, 163, 184, 0.6);
+  background: rgba(15, 23, 42, 0.02);
+}
+
+.model-card__tag--categoria {
+  border-color: rgba(129, 140, 248, 0.8);
+  background: rgba(129, 140, 248, 0.08);
+}
+
+.model-card__tag--subcategoria {
+  border-color: rgba(52, 211, 153, 0.8);
+  background: rgba(52, 211, 153, 0.08);
+}
+
+/* Link */
+
+.model-card__link a {
+  font-size: var(--font-size-sm);
+  color: var(--secondary);
+  text-decoration: underline;
+}
+
+/* Acciones */
+
+.model-card__actions {
+  position: absolute;
+  top: var(--space-sm);
+  right: var(--space-sm);
+  display: flex;
+  gap: 0.35rem;
+  opacity: 0;
+  transform: translateY(-2px);
+  pointer-events: none;
+  transition:
+    opacity 0.12s ease,
+    transform 0.12s ease;
+}
+
+.model-card:hover .model-card__actions {
+  opacity: 1;
+  transform: translateY(0);
+  pointer-events: auto;
+}
+
+.model-card__actions .icon-btn {
+  width: 2rem;
+  height: 2rem;
+  border-radius: 999px;
+  border: 1px solid rgba(148, 163, 184, 0.9);
+  background: var(--color-surface);
+  font-size: 0.95rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.model-card__actions .icon-btn--danger {
+  border-color: rgba(248, 113, 113, 0.9);
+}
+
+/* ==========================
+   FERIAS – FORM
+   ========================== */
+
+/* Fila 2: costo + notas (misma altura) */
+.fairs-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 2fr);
+  gap: var(--space-md);
+  margin-top: var(--space-md);
+  align-items: flex-end;
+}
+
+.fairs-row__notes textarea {
+  height: 42px;
+  resize: none;
+}
+
+/* Fila 3: subir flyer + estado */
+.fairs-row--uploads {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--space-md);
+  margin-top: var(--space-md);
+  align-items: flex-end;
+}
+
+.fairs-upload-group {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-xs);
+  min-width: 200px;
+}
+
+.fairs-estado-field {
+  min-width: 220px;
+}
+
+/* ==========================
+   FERIAS – FILTROS
+   ========================== */
+
+.fairs-filters {
+  display: flex;
+  align-items: flex-end;
+  gap: var(--space-sm);
+  margin-bottom: var(--space-md);
+  flex-wrap: nowrap; /* para que no se baje el botón */
+}
+
+/* ancho razonable para el select de Estado */
+.fairs-filters .form-field {
+  flex: 0 1 260px;
+}
+
+.fairs-filters-actions {
+  margin-left: auto;
+  flex-shrink: 0; /* el botón se mantiene al lado, no se rompe */
+}
+
+/* ==========================
+   FERIAS – ESTADO EN TARJETA
+   ========================== */
+
+.fair-status {
+  font-size: var(--font-size-xs);
+  padding: 0.15rem 0.65rem;
+  border-radius: 999px;
+  font-weight: 500;
+  border: 1px solid transparent;
+}
+
+.fair-status--planeada {
+  background: rgba(96, 165, 250, 0.18);
+  border-color: rgba(96, 165, 250, 0.9);
+  color: #e5f2ff;
+}
+
+.fair-status--realizada {
+  background: rgba(52, 211, 153, 0.18);
+  border-color: rgba(52, 211, 153, 0.9);
+  color: #dcfce7;
+}
+
+.fair-status--pospuesta {
+  background: rgba(251, 191, 36, 0.18);
+  border-color: rgba(251, 191, 36, 0.9);
+  color: #fef9c3;
+}
+
+.fair-status--cancelada {
+  background: rgba(248, 113, 113, 0.2);
+  border-color: rgba(248, 113, 113, 0.9);
+  color: #fee2e2;
+}
+
+.fair-status-inline {
+  margin-top: 0.5rem;
+  font-size: var(--font-size-xs);
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  justify-content: center;
+}
+
+.fair-status-inline select {
+  padding: 0.2rem 0.6rem; 
+  border-radius: 999px;
+  border: 1px solid rgba(148, 163, 184, 0.7);
+  background: var(--color-surface-alt);
+  color: inherit;
+  font-size: inherit;
+}
+
+.fair-status-inline select:focus {
+  outline: none;
+  border-color: rgba(129, 140, 248, 0.9);
+}

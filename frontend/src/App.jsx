@@ -6,10 +6,10 @@ import Proveedores from "./pages/proveedores.jsx";
 import Productos from "./pages/productos.jsx";
 import Nav from "./components/nav/nav.jsx";
 import Recetas from "./pages/recetas.jsx";
-import Produccion from "./pages/produccion.jsx";
+import Produccion from "./pages/produccion/produccion.jsx"; // 👈 NUEVA RUTA
 import Historial from "./pages/historial.jsx";
-import Pedidos from "./pages/pedidos.jsx";
-import Ventas from "./pages/ventas/ventas.jsx";      // 👈 nuevo path
+import Pedidos from "./pages/pedidos/pedidos.jsx";
+import Ventas from "./pages/ventas/ventas.jsx";
 import Modelos from "./pages/modelos.jsx";
 import Ferias from "./pages/ferias.jsx";
 import Gastos from "./pages/gastos/gastos.jsx";

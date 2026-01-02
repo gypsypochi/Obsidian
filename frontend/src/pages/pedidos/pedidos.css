@@ -1,0 +1,180 @@
+/* frontend/src/pages/pedidos/pedidos.css */
+
+/* Mensaje OK más prolijo */
+.pedidos-mensaje-ok {
+  color: var(--success, #16a34a);
+  font-size: var(--font-size-sm);
+}
+
+/* ====== Resumen rápido ====== */
+
+.pedidos-summary-header {
+  justify-content: center;
+  text-align: center;
+}
+
+.pedidos-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: var(--space-md);
+}
+
+.pedidos-summary-card {
+  background: var(--color-surface);
+  border-radius: var(--radius-lg);
+  padding: var(--space-md);
+  box-shadow: var(--shadow-soft);
+  border: 1px solid rgba(148, 163, 184, 0.35);
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.pedidos-summary-label {
+  font-size: var(--font-size-xs, 0.8rem);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-secondary);
+}
+
+.pedidos-summary-value {
+  font-size: var(--font-size-xl, 1.4rem);
+  font-weight: 700;
+}
+
+/* Colores por tipo de tarjeta */
+.pedidos-summary-card--activos {
+  border-color: var(--secondary, #6366f1);
+}
+
+.pedidos-summary-card--vencidos {
+  border-color: var(--danger, #dc2626);
+  background: rgba(248, 113, 113, 0.08);
+}
+
+.pedidos-summary-card--hoy {
+  border-color: var(--warning, #f59e0b);
+  background: rgba(253, 224, 71, 0.08);
+}
+
+.pedidos-summary-card--proximos {
+  border-color: var(--success, #16a34a);
+  background: rgba(74, 222, 128, 0.08);
+}
+
+/* ====== Checkbox "Marcar como urgente" (form) ====== */
+
+.pedidos-form-urgente label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+}
+
+.pedidos-form-urgente input[type="checkbox"] {
+  width: 1rem;
+  height: 1rem;
+  accent-color: var(--secondary, #6366f1);
+}
+
+/* ============================
+   LISTA DE PEDIDOS – TABLA
+============================ */
+
+/* Ajustar columnas específicas solo para esta tabla */
+.pedidos-table th:nth-child(4),
+.pedidos-table td:nth-child(4) {
+  /* Notas: darle más aire */
+  min-width: 200px;
+}
+
+.pedidos-table th:nth-child(5),
+.pedidos-table td:nth-child(5) {
+  /* Cantidad: más chica y centrada */
+  width: 70px;
+  text-align: center;
+}
+
+.pedidos-th-cantidad {
+  text-align: center;
+}
+
+.pedidos-td-cantidad {
+  text-align: center;
+  font-weight: 600;
+}
+
+/* Estilo de checkbox dentro de la tabla */
+.pedidos-row input[type="checkbox"] {
+  width: 1rem;
+  height: 1rem;
+  accent-color: var(--secondary, #6366f1);
+}
+
+/* Estilo de select Estado dentro de la tabla */
+.pedidos-row select {
+  border-radius: var(--radius-md);
+  border: 1px solid rgba(148, 163, 184, 0.6);
+  padding: 0.25rem 0.5rem;
+  font-size: var(--font-size-xs, 0.8rem);
+  background: var(--color-surface-alt);
+  color: var(--text-primary);
+}
+
+.pedidos-row select:focus {
+  outline: 2px solid rgba(129, 140, 248, 0.7);
+  outline-offset: 1px;
+  border-color: transparent;
+}
+
+/* ============================
+   LISTA DE PEDIDOS – ESTADOS
+============================ */
+
+.pedidos-row {
+  transition:
+    background 0.25s ease,
+    box-shadow 0.25s ease,
+    color 0.2s ease;
+}
+
+/* Hover coherente con crud-table */
+.pedidos-row:hover {
+  background: rgba(148, 163, 184, 0.08);
+}
+
+/* --- URGENTE --- */
+.pedidos-row.is-urgente {
+  background: rgba(129, 140, 248, 0.08); /* violeta suave */
+  color: var(--text-primary);
+  box-shadow: inset 0 0 0 1px rgba(129, 140, 248, 0.7);
+}
+
+/* --- VENCIDO --- */
+.pedidos-row.is-vencido {
+  background: rgba(239, 68, 68, 0.08); /* rojo controlado */
+  color: var(--text-primary);
+  box-shadow: inset 0 0 0 1px rgba(239, 68, 68, 0.7);
+}
+
+/* Bordes inferiores marcados cuando tienen estado especial */
+.pedidos-row.is-urgente td {
+  border-bottom: 1px solid rgba(129, 140, 248, 0.9);
+}
+
+.pedidos-row.is-vencido td {
+  border-bottom: 1px solid rgba(239, 68, 68, 0.9);
+}
+
+/* --- URGENTE + VENCIDO --- */
+.pedidos-row.is-urgente.is-vencido {
+  background: linear-gradient(
+    to right,
+    rgba(239, 68, 68, 0.12),
+    rgba(129, 140, 248, 0.12)
+  );
+  box-shadow:
+    inset 0 0 0 1px rgba(239, 68, 68, 0.7),
+    inset 0 0 0 3px rgba(129, 140, 248, 0.5);
+  font-weight: 600;
+}

@@ -1,0 +1,177 @@
+/* frontend/src/pages/produccion/produccion.css */
+
+/* Mensaje OK */
+.produccion-mensaje-ok {
+  color: var(--success, #16a34a);
+  font-size: var(--font-size-sm);
+}
+
+/* Textos de ayuda bajo inputs */
+.produccion-help-text {
+  font-size: var(--font-size-xs, 0.8rem);
+  color: var(--text-muted);
+  margin-top: 0.25rem;
+}
+
+/* Header acordeón */
+.produccion-accordion-header {
+  align-items: flex-start;
+}
+
+/* Contenedor general del acordeón */
+.produccion-accordion {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+}
+
+/* Cada <details> */
+.produccion-accordion-item {
+  border-radius: var(--radius-lg);
+  border: 1px solid rgba(148, 163, 184, 0.35);
+  background: radial-gradient(circle at top left, #020617, #020617 40%, #020617);
+  overflow: hidden;
+  box-shadow: var(--shadow-soft);
+}
+
+/* Ocultar marcador default de summary */
+.produccion-accordion-summary {
+  list-style: none;
+}
+
+.produccion-accordion-summary::-webkit-details-marker {
+  display: none;
+}
+
+/* Summary: cabecera clickable */
+.produccion-accordion-summary {
+  cursor: pointer;
+  padding: 0.8rem 1rem;
+  background: linear-gradient(
+    90deg,
+    rgba(129, 140, 248, 0.16),
+    rgba(15, 23, 42, 0.95)
+  );
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+/* Línea principal: nombre + stock */
+.produccion-product-main {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-md);
+  align-items: center;
+}
+
+.produccion-product-name {
+  font-weight: 600;
+  font-size: var(--font-size-md, 1rem);
+}
+
+.produccion-product-stock {
+  font-size: var(--font-size-xs, 0.8rem);
+  color: var(--text-secondary);
+}
+
+/* Chips/badges debajo del título */
+.produccion-product-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+
+.produccion-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.1rem 0.55rem;
+  border-radius: 999px;
+  font-size: var(--font-size-xs, 0.78rem);
+  border: 1px solid rgba(148, 163, 184, 0.6);
+  background: rgba(15, 23, 42, 0.9);
+  color: var(--text-secondary);
+}
+
+/* Solo usamos el de modelos ahora */
+.produccion-badge--models {
+  border-color: var(--primary, #38bdf8);
+  color: var(--primary-light, #7dd3fc);
+}
+
+/* Cuerpo del acordeón */
+.produccion-accordion-body {
+  padding: 0.85rem 1rem 1rem;
+  background: var(--color-surface, #020617);
+  border-top: 1px solid rgba(15, 23, 42, 0.9);
+}
+
+/* Warning para cuadernos sin modelos */
+.produccion-warning {
+  font-size: var(--font-size-xs, 0.82rem);
+  margin-bottom: 0.75rem;
+  padding: 0.5rem 0.65rem;
+  border-radius: var(--radius-md);
+}
+
+.produccion-warning--cuaderno {
+  background: rgba(124, 45, 18, 0.85);
+  color: #fed7aa;
+  border: 1px solid rgba(248, 153, 112, 0.9);
+}
+
+/* ===== Tarjetas de modelos ===== */
+
+/* Tarjetas fijas tipo “fichitas” */
+.produccion-model-cards {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-sm);
+}
+
+/* Mini tarjeta de modelo */
+.produccion-model-card {
+  flex: 0 0 260px;          /* ancho fijo aproximado */
+  max-width: 260px;
+  min-height: 120px;
+  border-radius: var(--radius-lg);
+  border: 1px solid rgba(148, 163, 184, 0.4);
+  background: radial-gradient(circle at top, #020617, #020617 60%, #020617);
+  padding: 0.7rem 0.8rem;
+  display: flex;
+  flex-direction: column;
+  /* 👉 IMPORTANTE: sacamos space-between para que título + texto queden juntos */
+  justify-content: flex-start;
+  gap: 0.35rem;
+}
+
+.produccion-model-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: var(--space-sm);
+}
+
+.produccion-model-card-header strong {
+  font-size: var(--font-size-sm, 0.95rem);
+  line-height: 1.1;
+}
+
+/* Código del modelo (si existe) */
+.produccion-model-code {
+  font-size: var(--font-size-xs, 0.78rem);
+  color: var(--text-muted);
+}
+
+/* Cuerpo con texto compacto */
+.produccion-model-card-body {
+  font-size: var(--font-size-xs, 0.82rem);
+  color: var(--text-secondary);
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.produccion-model-line b {
+  color: var(--text-primary);
+}

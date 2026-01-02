@@ -78,3 +78,59 @@
   gap: var(--space-sm);
   flex-wrap: wrap;
 }
+
+/* Inputs de archivo reutilizables */
+
+.form-file-inline {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  flex-wrap: wrap;
+  margin-top: 0.35rem;
+}
+
+.form-file-input {
+  display: none;
+}
+
+.form-file-button {
+  cursor: pointer;
+}
+
+.form-file-hint {
+  font-size: var(--font-size-xs, 0.8rem);
+  color: var(--text-muted);
+}
+
+
+/* ===== Subida de archivos genérica (para Modelos, Ferias, etc.) ===== */
+
+.upload-row {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-sm);
+  flex-wrap: wrap;
+}
+
+.upload-input {
+  display: none;
+}
+
+.upload-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: var(--font-size-sm);
+  padding-inline: 0.9rem;
+}
+
+.upload-button-icon {
+  font-size: 1.1rem;
+}
+
+.upload-hint {
+  display: block;
+  margin-top: 0.25rem;
+  font-size: var(--font-size-xs, 0.8rem);
+  color: var(--text-muted);
+}
