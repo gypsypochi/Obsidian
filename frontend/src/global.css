@@ -211,8 +211,16 @@ button {
    =========================== */
 
 .card {
-  background: radial-gradient(circle at top left, rgba(139, 92, 246, 0.15), transparent 60%),
-    radial-gradient(circle at bottom right, rgba(56, 189, 248, 0.12), transparent 55%),
+  background: radial-gradient(
+      circle at top left,
+      rgba(139, 92, 246, 0.15),
+      transparent 60%
+    ),
+    radial-gradient(
+      circle at bottom right,
+      rgba(56, 189, 248, 0.12),
+      transparent 55%
+    ),
     var(--color-surface);
   border-radius: var(--radius-lg);
   padding: var(--space-md);
@@ -229,8 +237,16 @@ button {
 }
 
 .card-kpi {
-  background: radial-gradient(circle at top left, rgba(139, 92, 246, 0.25), transparent 60%),
-    radial-gradient(circle at bottom right, rgba(56, 189, 248, 0.18), transparent 55%),
+  background: radial-gradient(
+      circle at top left,
+      rgba(139, 92, 246, 0.25),
+      transparent 60%
+    ),
+    radial-gradient(
+      circle at bottom right,
+      rgba(56, 189, 248, 0.18),
+      transparent 55%
+    ),
     var(--color-surface);
   border-radius: var(--radius-lg);
   padding: var(--space-md);
@@ -293,31 +309,39 @@ button {
    Helpers
    =========================== */
 
-.text-sm { font-size: var(--font-size-sm); }
-.text-xs { font-size: var(--font-size-xs); }
-.text-lg { font-size: var(--font-size-lg); }
-.text-center { text-align: center; }
+.text-sm {
+  font-size: var(--font-size-sm);
+}
+.text-xs {
+  font-size: var(--font-size-xs);
+}
+.text-lg {
+  font-size: var(--font-size-lg);
+}
+.text-center {
+  text-align: center;
+}
 
 /* ===========================
    Layout OBSIDIAN (general)
    =========================== */
 
+/* 👉 ahora el scroll es del body, no de app-main */
 .app-layout {
   display: grid;
   grid-template-columns: 260px minmax(0, 1fr);
-  height: 100vh;
+  min-height: 100vh;
   width: 100%;
-  overflow: hidden; /* el scroll vive en app-main */
 }
 
 .app-main {
   padding: var(--space-lg);
   max-width: var(--layout-max-width);
   margin: 0 auto;
-  overflow-y: auto;
+  width: 100%;
 }
 
-/* PageHeader genérico */
+/* PageHeader genérico (por si lo usás en otros lados) */
 .page-header {
   display: flex;
   flex-wrap: wrap;

@@ -1,0 +1,232 @@
+/* Página base para CRUDs (Materiales, Proveedores, etc.) */
+
+.crud-page {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-lg);
+}
+
+/* Header centrado y grande */
+.crud-header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: var(--space-sm);
+  margin-bottom: var(--space-lg);
+}
+
+.crud-title {
+  font-size: var(--font-size-2xl);
+  font-family: var(--font-title);
+}
+
+.crud-description {
+  font-size: var(--font-size-sm);
+  color: var(--text-secondary);
+  max-width: 680px;
+}
+
+.crud-content {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-lg);
+}
+
+.crud-section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+}
+
+.crud-section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--space-md);
+  flex-wrap: wrap;
+}
+
+.crud-section-header h2 {
+  margin: 0;
+}
+
+.crud-filters {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  flex-wrap: wrap;
+}
+
+.crud-filter-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: var(--font-size-sm);
+  color: var(--text-secondary);
+}
+
+.crud-filter-label input {
+  border-radius: var(--radius-md);
+  border: 1px solid var(--text-muted);
+  padding: 0.35rem 0.6rem;
+  background: var(--color-surface-alt);
+  color: var(--text-primary);
+}
+
+/* Contenedor tabla */
+.crud-table-wrapper {
+  background: var(--color-surface);
+  border-radius: var(--radius-lg);
+  padding: var(--space-md);
+  box-shadow: var(--shadow-soft);
+  border: 1px solid var(--text-muted);
+  overflow-x: auto;
+}
+
+/* Tabla */
+.crud-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--font-size-sm);
+}
+
+.crud-table th,
+.crud-table td {
+  padding: 0.5rem 0.75rem;
+  text-align: left;
+  border-bottom: 1px solid var(--color-surface-alt);
+}
+
+/* Separadores verticales suaves */
+.crud-table th + th,
+.crud-table td + td {
+  border-left: 1px solid var(--color-surface-alt);
+}
+
+.crud-table th {
+  font-weight: 600;
+  color: var(--text-secondary);
+  background: var(--color-surface-alt);
+}
+
+/* Hover fila - sobrio */
+.crud-table tbody tr:hover {
+  background: rgba(148, 163, 184, 0.08);
+}
+
+/* Columnas stock / acciones más ajustadas */
+.crud-table th:nth-child(4),
+.crud-table td:nth-child(4) {
+  width: 90px;
+  text-align: center;
+}
+
+.crud-table th:nth-child(5),
+.crud-table td:nth-child(5) {
+  width: 110px;
+  text-align: center;
+}
+
+/* Inputs en edición dentro de la tabla */
+.crud-table input {
+  width: 100%;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--text-muted);
+  padding: 0.3rem 0.45rem;
+  background: var(--color-surface-alt);
+  color: var(--text-primary);
+  font-size: var(--font-size-sm);
+}
+
+.crud-table input::placeholder {
+  color: var(--text-muted);
+}
+
+.crud-table input:focus {
+  outline: 2px solid var(--primary);
+  border-color: transparent;
+}
+
+/* Acciones */
+.crud-actions {
+  display: flex;
+  justify-content: center;
+  gap: 0.4rem;
+}
+
+.icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  width: 32px;
+  height: 32px;
+
+  border-radius: var(--radius-md);
+  background: var(--color-surface-alt);
+  border: 1px solid var(--text-muted);
+  color: var(--text-secondary);
+  cursor: pointer;
+
+  transition:
+    background-color 0.2s ease,
+    border-color 0.2s ease,
+    transform 0.1s ease,
+    color 0.2s ease;
+}
+
+.icon-btn:hover {
+  color: var(--text-primary);
+  border-color: var(--secondary);
+  transform: translateY(-1px);
+}
+
+.icon-btn.delete:hover {
+  border-color: var(--danger);
+  color: var(--danger);
+}
+
+/* =========================
+   STOCK: normal / bajo / cero
+   ========================= */
+
+/* Estado por defecto (stock ok) */
+.stock-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  min-width: 2.4rem; /* mismo tamaño 1 y 2 dígitos */
+  padding: 0.2rem 0.6rem;
+
+  border-radius: var(--radius-full);
+  font-weight: 600;
+  font-size: var(--font-size-sm);
+
+  background: var(--color-surface-alt);
+  border: 1px solid var(--secondary);
+  color: var(--secondary-light);
+}
+
+/* Stock bajo (ej: 1–5) */
+.stock-badge-low {
+  background: var(--color-surface-alt);
+  border-color: var(--warning);
+  color: var(--warning);
+}
+
+/* Sin stock (0) */
+.stock-badge-zero {
+  background: var(--color-surface-alt);
+  border-color: var(--danger);
+  color: var(--danger);
+}
+
+/* Mensajes */
+.crud-error {
+  color: var(--danger);
+  font-size: var(--font-size-sm);
+}

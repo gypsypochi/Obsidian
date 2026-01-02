@@ -1,3 +1,4 @@
+// frontend/src/pages/materiales.jsx
 import { useEffect, useMemo, useState } from "react";
 import {
   getMateriales,
@@ -5,6 +6,21 @@ import {
   updateMaterial,
   deleteMaterial,
 } from "../api";
+import LayoutCrud from "../components/layout-crud/layout-crud.jsx";
+import { FormSection } from "../components/form/form.jsx";
+
+/* Helper para clases de stock */
+function getStockBadgeClass(stock) {
+  const value = Number(stock ?? 0);
+
+  if (value <= 0) {
+    return "stock-badge stock-badge-zero"; // rojo
+  }
+  if (value > 0 && value <= 5) {
+    return "stock-badge stock-badge-low"; // naranja
+  }
+  return "stock-badge"; // normal
+}
 
 export default function Materiales() {
   const [materiales, setMateriales] = useState([]);
@@ -58,7 +74,6 @@ export default function Materiales() {
     e.preventDefault();
     try {
       setError("");
-      // 🔹 No enviamos stock, el backend lo inicializa en 0
       await createMaterial(form);
       setForm({ nombre: "", categoria: "", unidad: "" });
       await load();
@@ -92,7 +107,6 @@ export default function Materiales() {
   async function saveEdit() {
     try {
       setError("");
-      // 🔹 Tampoco mandamos stock en la edición, solo los datos básicos
       await updateMaterial(editId, editForm);
       cancelEdit();
       await load();
@@ -123,151 +137,194 @@ export default function Materiales() {
   }, [materiales, q]);
 
   return (
-    <div>
-      <h1>Materiales</h1>
-
+    <LayoutCrud
+      title="Materiales"
+      description="Base de todos los insumos que usás en el emprendimiento."
+    >
       {loading && <p>Cargando...</p>}
-      {error && <p style={{ color: "red" }}>{error}</p>}
+      {error && <p className="crud-error">{error}</p>}
 
-      <h2>Alta</h2>
-      <form onSubmit={onSubmit}>
-        <div>
-          <label>Nombre *</label>
-          <input
-            name="nombre"
-            value={form.nombre}
-            onChange={onChange}
-            placeholder="Ej: vinilo mate"
-            required
-          />
+      {/* FORMULARIO DE ALTA */}
+      <FormSection
+        title="Alta de material"
+        description="Cargá materiales sin stock inicial; el stock se actualiza con producción y consumos."
+        onSubmit={onSubmit}
+      >
+        <div className="form-grid">
+          <div className="form-field">
+            <label>Nombre *</label>
+            <input
+              name="nombre"
+              value={form.nombre}
+              onChange={onChange}
+              placeholder="Ej: vinilo mate"
+              required
+            />
+          </div>
+
+          <div className="form-field">
+            <label>Categoría</label>
+            <input
+              name="categoria"
+              value={form.categoria}
+              onChange={onChange}
+              placeholder="Ej: vinilos"
+            />
+          </div>
+
+          <div className="form-field">
+            <label>Unidad</label>
+            <input
+              name="unidad"
+              value={form.unidad}
+              onChange={onChange}
+              placeholder="Ej: planchas, metros, ml..."
+            />
+          </div>
         </div>
 
-        <div>
-          <label>Categoría</label>
-          <input
-            name="categoria"
-            value={form.categoria}
-            onChange={onChange}
-            placeholder="Ej: vinilos"
-          />
+        <div className="form-actions">
+          <button type="submit" className="btn-primary">
+            Crear
+          </button>
+          <button type="button" className="btn-secondary" onClick={load}>
+            Recargar
+          </button>
         </div>
+      </FormSection>
 
-        <div>
-          <label>Unidad</label>
-          <input
-            name="unidad"
-            value={form.unidad}
-            onChange={onChange}
-            placeholder="Ej: planchas, metros, ml..."
-          />
-        </div>
+      {/* LISTA */}
+      <section className="crud-section">
+        <header className="crud-section-header">
+          <h2>Lista de materiales</h2>
+          <div className="crud-filters">
+            <label className="crud-filter-label">
+              <span>Filtrar por nombre</span>
+              <input
+                value={q}
+                onChange={(e) => setQ(e.target.value)}
+                placeholder="buscar..."
+              />
+            </label>
+          </div>
+        </header>
 
-        <button type="submit">Crear</button>
-        <button type="button" onClick={load}>
-          Recargar
-        </button>
-      </form>
-
-      <h2>Lista</h2>
-
-      <div>
-        <label>Filtrar por nombre</label>
-        <input
-          value={q}
-          onChange={(e) => setQ(e.target.value)}
-          placeholder="buscar..."
-        />
-      </div>
-
-      <table border="1" cellPadding="8">
-        <thead>
-          <tr>
-            <th>Nombre</th>
-            <th>Categoría</th>
-            <th>Unidad</th>
-            <th>Stock</th> {/* 🔹 Solo lectura */}
-            <th>Acciones</th>
-          </tr>
-        </thead>
-
-        <tbody>
-          {materialesFiltrados.map((m) => {
-            const isEditing = editId === m.id;
-
-            return (
-              <tr key={m.id}>
-                <td>
-                  {isEditing ? (
-                    <input
-                      name="nombre"
-                      value={editForm.nombre}
-                      onChange={onEditChange}
-                      required
-                    />
-                  ) : (
-                    m.nombre
-                  )}
-                </td>
-
-                <td>
-                  {isEditing ? (
-                    <input
-                      name="categoria"
-                      value={editForm.categoria}
-                      onChange={onEditChange}
-                    />
-                  ) : (
-                    m.categoria
-                  )}
-                </td>
-
-                <td>
-                  {isEditing ? (
-                    <input
-                      name="unidad"
-                      value={editForm.unidad}
-                      onChange={onEditChange}
-                    />
-                  ) : (
-                    m.unidad
-                  )}
-                </td>
-
-                {/* Stock solo lectura: viene del backend (producción/gastos) */}
-                <td>{m.stock}</td>
-
-                <td>
-                  {!isEditing ? (
-                    <>
-                      <button type="button" onClick={() => startEdit(m)}>
-                        Editar
-                      </button>
-                      <button type="button" onClick={() => onDelete(m.id)}>
-                        Eliminar
-                      </button>
-                    </>
-                  ) : (
-                    <>
-                      <button type="button" onClick={saveEdit}>
-                        Guardar
-                      </button>
-                      <button type="button" onClick={cancelEdit}>
-                        Cancelar
-                      </button>
-                    </>
-                  )}
-                </td>
+        <div className="crud-table-wrapper">
+          <table className="crud-table">
+            <thead>
+              <tr>
+                <th>Nombre</th>
+                <th>Categoría</th>
+                <th>Unidad</th>
+                <th>Stock</th>
+                <th>Acciones</th>
               </tr>
-            );
-          })}
+            </thead>
 
-          {!loading && materialesFiltrados.length === 0 && (
-            <tr>
-              <td colSpan="5">No hay materiales.</td>
-            </tr>
-          )}
-        </tbody>
-      </table>
-    </div>
+            <tbody>
+              {materialesFiltrados.map((m) => {
+                const isEditing = editId === m.id;
+                const stockValue = Number(m.stock ?? 0);
+
+                return (
+                  <tr key={m.id}>
+                    <td>
+                      {isEditing ? (
+                        <input
+                          name="nombre"
+                          value={editForm.nombre}
+                          onChange={onEditChange}
+                          required
+                        />
+                      ) : (
+                        m.nombre
+                      )}
+                    </td>
+
+                    <td>
+                      {isEditing ? (
+                        <input
+                          name="categoria"
+                          value={editForm.categoria}
+                          onChange={onEditChange}
+                        />
+                      ) : (
+                        m.categoria
+                      )}
+                    </td>
+
+                    <td>
+                      {isEditing ? (
+                        <input
+                          name="unidad"
+                          value={editForm.unidad}
+                          onChange={onEditChange}
+                        />
+                      ) : (
+                        m.unidad
+                      )}
+                    </td>
+
+                    {/* Stock solo lectura con alarmas */}
+                    <td>
+                      <span className={getStockBadgeClass(stockValue)}>
+                        {stockValue}
+                      </span>
+                    </td>
+
+                    <td>
+                      {!isEditing ? (
+                        <div className="crud-actions">
+                          <button
+                            type="button"
+                            className="icon-btn"
+                            onClick={() => startEdit(m)}
+                            title="Editar"
+                          >
+                            ✏️
+                          </button>
+
+                          <button
+                            type="button"
+                            className="icon-btn delete"
+                            onClick={() => onDelete(m.id)}
+                            title="Eliminar"
+                          >
+                            🗑️
+                          </button>
+                        </div>
+                      ) : (
+                        <>
+                          <button
+                            type="button"
+                            className="btn-primary"
+                            onClick={saveEdit}
+                          >
+                            Guardar
+                          </button>
+                          <button
+                            type="button"
+                            className="btn-secondary"
+                            onClick={cancelEdit}
+                          >
+                            Cancelar
+                          </button>
+                        </>
+                      )}
+                    </td>
+                  </tr>
+                );
+              })}
+
+              {!loading && materialesFiltrados.length === 0 && (
+                <tr>
+                  <td colSpan="5">No hay materiales.</td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      </section>
+    </LayoutCrud>
   );
 }

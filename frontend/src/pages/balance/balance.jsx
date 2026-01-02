@@ -1,13 +1,16 @@
-// frontend/src/pages/balance.jsx
+// frontend/src/pages/balance/balance.jsx
 import { useEffect, useMemo, useState } from "react";
 import {
   getVentas,
   getGastos,
   getFerias,
   getProductos,
-} from "../api";
-import PageHeader from "../components/PageHeader.jsx";
-import "./balance.css";
+} from "../../api"; // 👈 sube dos niveles
+
+import PageHeader from "../../components/PageHeader.jsx"; // 👈 también dos niveles
+
+import "./balance.css"; // 👈 este se queda igual porque el CSS está en la misma carpeta
+
 import {
   LineChart,
   Line,

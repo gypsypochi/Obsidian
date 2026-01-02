@@ -1,3 +1,4 @@
+// frontend/src/pages/recetas.jsx
 import { useEffect, useMemo, useState } from "react";
 import {
   getRecetas,
@@ -7,6 +8,8 @@ import {
   getProductos,
   getMateriales,
 } from "../api";
+import LayoutCrud from "../components/layout-crud/layout-crud.jsx";
+import { FormSection } from "../components/form/form.jsx";
 
 export default function Recetas() {
   const [recetas, setRecetas] = useState([]);
@@ -21,7 +24,7 @@ export default function Recetas() {
     materialId: "",
     cantidad: 0,
     unidad: "",
-    tipoProduccion: "unidad", // NUEVO
+    tipoProduccion: "unidad",
   });
 
   // Filtro (por productoId o nombre)
@@ -34,7 +37,7 @@ export default function Recetas() {
     materialId: "",
     cantidad: 0,
     unidad: "",
-    tipoProduccion: "unidad", // NUEVO
+    tipoProduccion: "unidad",
   });
 
   async function loadAll() {
@@ -180,244 +183,279 @@ export default function Recetas() {
   }
 
   return (
-    <div>
-      <h1>Recetas (Producto ↔ Materiales)</h1>
-
-      <p>
-        <strong>Tipo de producción:</strong> usar{" "}
-        <em>"Por unidad"</em> para cuadernos u otros productos fijos,
-        y <em>"Por lote/plancha"</em> para stickers u otros que trabajes
-        por tirada.
-      </p>
-
+    <LayoutCrud
+      title="Recetas (Producto ↔ Materiales)"
+      description="Definí qué materiales y cantidades se usan para producir cada producto, por unidad o por lote/plancha."
+    >
       {loading && <p>Cargando...</p>}
-      {error && <p>{error}</p>}
+      {error && <p className="crud-error">{error}</p>}
 
-      <h2>Alta</h2>
-      <form onSubmit={onSubmit}>
-        <div>
-          <label>Producto *</label>
-          <select
-            name="productoId"
-            value={form.productoId}
-            onChange={onChange}
-            required
-          >
-            <option value="">-- seleccionar producto --</option>
-            {productos.map((p) => (
-              <option key={p.id} value={p.id}>
-                {p.nombre} ({p.id})
-              </option>
-            ))}
-          </select>
+      <FormSection
+        title="Alta de receta"
+        description="Configurá la relación entre un producto y los materiales que consume (por unidad o por lote/plancha)."
+        onSubmit={onSubmit}
+      >
+        <div className="form-grid">
+          <div className="form-field">
+            <label>Producto *</label>
+            <select
+              name="productoId"
+              value={form.productoId}
+              onChange={onChange}
+              required
+            >
+              <option value="">-- seleccionar producto --</option>
+              {productos.map((p) => (
+                <option key={p.id} value={p.id}>
+                  {p.nombre} ({p.id})
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div className="form-field">
+            <label>Tipo de producción *</label>
+            <select
+              name="tipoProduccion"
+              value={form.tipoProduccion}
+              onChange={onChange}
+              required
+            >
+              <option value="unidad">Por unidad (cuadernos, etc.)</option>
+              <option value="lote">Por lote/plancha (stickers, etc.)</option>
+            </select>
+          </div>
+
+          <div className="form-field">
+            <label>Material *</label>
+            <select
+              name="materialId"
+              value={form.materialId}
+              onChange={onChange}
+              required
+            >
+              <option value="">-- seleccionar material --</option>
+              {materiales.map((m) => (
+                <option key={m.id} value={m.id}>
+                  {m.nombre} ({m.id})
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div className="form-field">
+            <label>Cantidad</label>
+            <input
+              name="cantidad"
+              type="number"
+              value={form.cantidad}
+              onChange={onChange}
+            />
+          </div>
+
+          <div className="form-field">
+            <label>Unidad</label>
+            <input
+              name="unidad"
+              value={form.unidad}
+              onChange={onChange}
+              placeholder="Ej: planchas / hojas / u"
+            />
+          </div>
         </div>
 
-        <div>
-          <label>Tipo de producción *</label>
-          <select
-            name="tipoProduccion"
-            value={form.tipoProduccion}
-            onChange={onChange}
-            required
-          >
-            <option value="unidad">Por unidad (cuadernos, etc.)</option>
-            <option value="lote">Por lote/plancha (stickers, etc.)</option>
-          </select>
+        <div className="form-actions">
+          <button type="submit" className="btn-primary">
+            Crear
+          </button>
+          <button type="button" className="btn-secondary" onClick={loadAll}>
+            Recargar
+          </button>
         </div>
+      </FormSection>
 
-        <div>
-          <label>Material *</label>
-          <select
-            name="materialId"
-            value={form.materialId}
-            onChange={onChange}
-            required
-          >
-            <option value="">-- seleccionar material --</option>
-            {materiales.map((m) => (
-              <option key={m.id} value={m.id}>
-                {m.nombre} ({m.id})
-              </option>
-            ))}
-          </select>
-        </div>
+      <section className="crud-section">
+        <header className="crud-section-header">
+          <h2>Lista de recetas</h2>
+          <div className="crud-filters">
+            <label className="crud-filter-label">
+              <span>Filtrar por producto (id o nombre)</span>
+              <input
+                value={q}
+                onChange={(e) => setQ(e.target.value)}
+                placeholder="Ej: prod-... o nombre"
+              />
+            </label>
+          </div>
+        </header>
 
-        <div>
-          <label>Cantidad</label>
-          <input
-            name="cantidad"
-            type="number"
-            value={form.cantidad}
-            onChange={onChange}
-          />
-        </div>
-
-        <div>
-          <label>Unidad</label>
-          <input
-            name="unidad"
-            value={form.unidad}
-            onChange={onChange}
-            placeholder="Ej: planchas / hojas / u"
-          />
-        </div>
-
-        <button type="submit">Crear</button>
-        <button type="button" onClick={loadAll}>
-          Recargar
-        </button>
-      </form>
-
-      <h2>Lista</h2>
-
-      <div>
-        <label>Filtrar por producto (id o nombre)</label>
-        <input
-          value={q}
-          onChange={(e) => setQ(e.target.value)}
-          placeholder="Ej: prod-... o nombre"
-        />
-      </div>
-
-      <table border="1" cellPadding="8">
-        <thead>
-          <tr>
-            <th>Producto</th>
-            <th>Tipo</th>
-            <th>Material</th>
-            <th>Cantidad</th>
-            <th>Unidad</th>
-            <th>Acciones</th>
-          </tr>
-        </thead>
-
-        <tbody>
-          {recetasFiltradas.map((r) => {
-            const isEditing = editId === r.id;
-            const prod = findProducto(r.productoId);
-            const mat = findMaterial(r.materialId);
-
-            return (
-              <tr key={r.id}>
-                <td>
-                  {isEditing ? (
-                    <select
-                      name="productoId"
-                      value={editForm.productoId}
-                      onChange={onEditChange}
-                      required
-                    >
-                      <option value="">-- seleccionar producto --</option>
-                      {productos.map((p) => (
-                        <option key={p.id} value={p.id}>
-                          {p.nombre} ({p.id})
-                        </option>
-                      ))}
-                    </select>
-                  ) : (
-                    <>
-                      <div>{prod?.nombre || "(producto no encontrado)"}</div>
-                      <small>{r.productoId}</small>
-                    </>
-                  )}
-                </td>
-
-                <td>
-                  {isEditing ? (
-                    <select
-                      name="tipoProduccion"
-                      value={editForm.tipoProduccion}
-                      onChange={onEditChange}
-                      required
-                    >
-                      <option value="unidad">Por unidad</option>
-                      <option value="lote">Por lote/plancha</option>
-                    </select>
-                  ) : (
-                    labelTipo(r.tipoProduccion || "unidad")
-                  )}
-                </td>
-
-                <td>
-                  {isEditing ? (
-                    <select
-                      name="materialId"
-                      value={editForm.materialId}
-                      onChange={onEditChange}
-                      required
-                    >
-                      <option value="">-- seleccionar material --</option>
-                      {materiales.map((m) => (
-                        <option key={m.id} value={m.id}>
-                          {m.nombre} ({m.id})
-                        </option>
-                      ))}
-                    </select>
-                  ) : (
-                    <>
-                      <div>{mat?.nombre || "(material no encontrado)"}</div>
-                      <small>{r.materialId}</small>
-                    </>
-                  )}
-                </td>
-
-                <td>
-                  {isEditing ? (
-                    <input
-                      name="cantidad"
-                      type="number"
-                      value={editForm.cantidad}
-                      onChange={onEditChange}
-                    />
-                  ) : (
-                    r.cantidad
-                  )}
-                </td>
-
-                <td>
-                  {isEditing ? (
-                    <input
-                      name="unidad"
-                      value={editForm.unidad}
-                      onChange={onEditChange}
-                    />
-                  ) : (
-                    r.unidad
-                  )}
-                </td>
-
-                <td>
-                  {!isEditing ? (
-                    <>
-                      <button type="button" onClick={() => startEdit(r)}>
-                        Editar
-                      </button>
-                      <button type="button" onClick={() => onDelete(r.id)}>
-                        Eliminar
-                      </button>
-                    </>
-                  ) : (
-                    <>
-                      <button type="button" onClick={saveEdit}>
-                        Guardar
-                      </button>
-                      <button type="button" onClick={cancelEdit}>
-                        Cancelar
-                      </button>
-                    </>
-                  )}
-                </td>
+        <div className="crud-table-wrapper">
+          <table className="crud-table">
+            <thead>
+              <tr>
+                <th>Producto</th>
+                <th>Tipo</th>
+                <th>Material</th>
+                <th>Cantidad</th>
+                <th>Unidad</th>
+                <th>Acciones</th>
               </tr>
-            );
-          })}
+            </thead>
 
-          {!loading && recetasFiltradas.length === 0 && (
-            <tr>
-              <td colSpan="6">No hay recetas.</td>
-            </tr>
-          )}
-        </tbody>
-      </table>
-    </div>
+            <tbody>
+              {recetasFiltradas.map((r) => {
+                const isEditing = editId === r.id;
+                const prod = findProducto(r.productoId);
+                const mat = findMaterial(r.materialId);
+
+                return (
+                  <tr key={r.id}>
+                    {/* Producto */}
+                    <td>
+                      {isEditing ? (
+                        <select
+                          name="productoId"
+                          value={editForm.productoId}
+                          onChange={onEditChange}
+                          required
+                        >
+                          <option value="">-- seleccionar producto --</option>
+                          {productos.map((p) => (
+                            <option key={p.id} value={p.id}>
+                              {p.nombre} ({p.id})
+                            </option>
+                          ))}
+                        </select>
+                      ) : (
+                        <>
+                          <div>{prod?.nombre || "(producto no encontrado)"}</div>
+                          <small>{r.productoId}</small>
+                        </>
+                      )}
+                    </td>
+
+                    {/* Tipo producción */}
+                    <td>
+                      {isEditing ? (
+                        <select
+                          name="tipoProduccion"
+                          value={editForm.tipoProduccion}
+                          onChange={onEditChange}
+                          required
+                        >
+                          <option value="unidad">Por unidad</option>
+                          <option value="lote">Por lote/plancha</option>
+                        </select>
+                      ) : (
+                        labelTipo(r.tipoProduccion || "unidad")
+                      )}
+                    </td>
+
+                    {/* Material */}
+                    <td>
+                      {isEditing ? (
+                        <select
+                          name="materialId"
+                          value={editForm.materialId}
+                          onChange={onEditChange}
+                          required
+                        >
+                          <option value="">-- seleccionar material --</option>
+                          {materiales.map((m) => (
+                            <option key={m.id} value={m.id}>
+                              {m.nombre} ({m.id})
+                            </option>
+                          ))}
+                        </select>
+                      ) : (
+                        <>
+                          <div>{mat?.nombre || "(material no encontrado)"}</div>
+                          <small>{r.materialId}</small>
+                        </>
+                      )}
+                    </td>
+
+                    {/* Cantidad */}
+                    <td>
+                      {isEditing ? (
+                        <input
+                          name="cantidad"
+                          type="number"
+                          value={editForm.cantidad}
+                          onChange={onEditChange}
+                        />
+                      ) : (
+                        r.cantidad
+                      )}
+                    </td>
+
+                    {/* Unidad */}
+                    <td>
+                      {isEditing ? (
+                        <input
+                          name="unidad"
+                          value={editForm.unidad}
+                          onChange={onEditChange}
+                        />
+                      ) : (
+                        r.unidad
+                      )}
+                    </td>
+
+                    {/* Acciones */}
+                    <td>
+                      {!isEditing ? (
+                        <div className="crud-actions">
+                          <button
+                            type="button"
+                            className="icon-btn"
+                            onClick={() => startEdit(r)}
+                            title="Editar"
+                          >
+                            ✏️
+                          </button>
+
+                          <button
+                            type="button"
+                            className="icon-btn delete"
+                            onClick={() => onDelete(r.id)}
+                            title="Eliminar"
+                          >
+                            🗑️
+                          </button>
+                        </div>
+                      ) : (
+                        <>
+                          <button
+                            type="button"
+                            className="btn-primary"
+                            onClick={saveEdit}
+                          >
+                            Guardar
+                          </button>
+                          <button
+                            type="button"
+                            className="btn-secondary"
+                            onClick={cancelEdit}
+                          >
+                            Cancelar
+                          </button>
+                        </>
+                      )}
+                    </td>
+                  </tr>
+                );
+              })}
+
+              {!loading && recetasFiltradas.length === 0 && (
+                <tr>
+                  <td colSpan="6">No hay recetas.</td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      </section>
+    </LayoutCrud>
   );
 }

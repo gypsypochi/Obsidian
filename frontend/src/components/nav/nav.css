@@ -3,6 +3,10 @@
    =========================== */
 
 .sidebar {
+  position: sticky;           /* 👈 se queda pegado al top al scrollear */
+  top: 0;
+  align-self: flex-start;     /* evita que se estire raro en el grid */
+
   display: flex;
   flex-direction: column;
   justify-content: space-between;
@@ -22,9 +26,10 @@
   border-right: 1px solid rgba(148, 163, 184, 0.25);
 
   width: 260px;
-  height: 100vh; /* ocupa toda la altura, no scrollea */
+  height: 100vh;
   box-sizing: border-box;
 }
+
 
 /* Header con logo y nombre */
 .sidebar-header {

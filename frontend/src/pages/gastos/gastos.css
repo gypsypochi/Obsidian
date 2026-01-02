@@ -1,0 +1,69 @@
+/* ===========================
+   Gastos: resumen + filtros
+   =========================== */
+
+.gastos-summary {
+  margin-bottom: var(--space-lg);
+}
+
+.gastos-summary-card {
+  max-width: 520px;
+  margin: 0 auto;
+  text-align: center;
+  min-height: 140px;               /* altura estable */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-xs);
+}
+
+.gastos-summary-main {
+  font-size: 2rem;
+  font-weight: 700;
+  margin: 0;
+  white-space: nowrap;             /* evita que se corte el número */
+}
+
+.gastos-summary-sub {
+  margin: 0;
+}
+
+.gastos-summary-filters {
+  margin-top: var(--space-sm);
+}
+
+/* Pills sólo para esta página */
+.gastos-filter-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-sm);
+  justify-content: center;
+}
+
+.gastos-filter-pill {
+  border-radius: var(--radius-full);
+  padding: 0.3rem 0.9rem;
+  font-size: var(--font-size-sm);
+  border: 1px solid rgba(148, 163, 184, 0.5);
+  background-color: var(--color-surface-alt);
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition:
+    background-color 0.2s ease,
+    border-color 0.2s ease,
+    color 0.2s ease,
+    transform 0.1s ease;
+}
+
+.gastos-filter-pill:hover {
+  border-color: var(--secondary-light);
+  color: var(--text-primary);
+}
+
+.gastos-filter-pill.is-active {
+  background: linear-gradient(135deg, var(--primary), var(--secondary));
+  border-color: transparent;
+  color: var(--text-primary);
+  transform: translateY(-1px);
+}

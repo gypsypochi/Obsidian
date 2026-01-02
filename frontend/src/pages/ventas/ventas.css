@@ -1,0 +1,30 @@
+/* ===========================
+   Ventas: resumen
+   =========================== */
+
+.ventas-summary {
+  margin-bottom: var(--space-lg);
+}
+
+.ventas-summary-card {
+  max-width: 520px;
+  margin: 0 auto;
+  text-align: center;
+  min-height: 140px;                /* altura fija como en gastos */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-xs);
+}
+
+.ventas-summary-main {
+  font-size: 2rem;
+  font-weight: 700;
+  margin: 0;
+  white-space: nowrap;              /* que el número no se corte raro */
+}
+
+.ventas-summary-sub {
+  margin: 0;
+}

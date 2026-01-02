@@ -1,3 +1,4 @@
+// frontend/src/pages/proveedores.jsx
 import { useEffect, useMemo, useState } from "react";
 import {
   getProveedores,
@@ -5,6 +6,8 @@ import {
   updateProveedor,
   deleteProveedor,
 } from "../api";
+import LayoutCrud from "../components/layout-crud/layout-crud.jsx";
+import { FormSection } from "../components/form/form.jsx";
 
 export default function Proveedores() {
   const [proveedores, setProveedores] = useState([]);
@@ -60,7 +63,13 @@ export default function Proveedores() {
     try {
       setError("");
       await createProveedor(form);
-      setForm({ nombre: "", contacto: "", telefono: "", email: "", notas: "" });
+      setForm({
+        nombre: "",
+        contacto: "",
+        telefono: "",
+        email: "",
+        notas: "",
+      });
       await load();
     } catch (e) {
       setError(e.message || "Error creando proveedor");
@@ -80,7 +89,13 @@ export default function Proveedores() {
 
   function cancelEdit() {
     setEditId(null);
-    setEditForm({ nombre: "", contacto: "", telefono: "", email: "", notas: "" });
+    setEditForm({
+      nombre: "",
+      contacto: "",
+      telefono: "",
+      email: "",
+      notas: "",
+    });
   }
 
   function onEditChange(e) {
@@ -121,193 +136,231 @@ export default function Proveedores() {
   }, [proveedores, q]);
 
   return (
-    <div>
-      <h1>Proveedores</h1>
-
+    <LayoutCrud
+      title="Proveedores"
+      description="Personas y empresas a las que les comprás materiales e insumos."
+    >
       {loading && <p>Cargando...</p>}
-      {error && <p>{error}</p>}
+      {error && <p className="crud-error">{error}</p>}
 
-      <h2>Alta</h2>
-      <form onSubmit={onSubmit}>
-        <div>
-          <label>Nombre *</label>
-          <input
-            name="nombre"
-            value={form.nombre}
-            onChange={onChange}
-            placeholder="Ej: Papelera San Martín"
-            required
-          />
+      {/* FORMULARIO DE ALTA */}
+      <FormSection
+        title="Alta de proveedor"
+        description="Registrá proveedores con sus datos de contacto y notas de referencia."
+        onSubmit={onSubmit}
+      >
+        <div className="form-grid">
+          <div className="form-field">
+            <label>Nombre *</label>
+            <input
+              name="nombre"
+              value={form.nombre}
+              onChange={onChange}
+              placeholder="Ej: Papelera San Martín"
+              required
+            />
+          </div>
+
+          <div className="form-field">
+            <label>Contacto</label>
+            <input
+              name="contacto"
+              value={form.contacto}
+              onChange={onChange}
+              placeholder="Ej: Juan"
+            />
+          </div>
+
+          <div className="form-field">
+            <label>Teléfono</label>
+            <input
+              name="telefono"
+              value={form.telefono}
+              onChange={onChange}
+              placeholder="Ej: 11-1234-5678"
+            />
+          </div>
+
+          <div className="form-field">
+            <label>Email</label>
+            <input
+              name="email"
+              value={form.email}
+              onChange={onChange}
+              placeholder="Ej: ventas@proveedor.com"
+            />
+          </div>
+
+          <div className="form-field">
+            <label>Notas</label>
+            <input
+              name="notas"
+              value={form.notas}
+              onChange={onChange}
+              placeholder="Ej: entrega lunes/miércoles"
+            />
+          </div>
         </div>
 
-        <div>
-          <label>Contacto</label>
-          <input
-            name="contacto"
-            value={form.contacto}
-            onChange={onChange}
-            placeholder="Ej: Juan"
-          />
+        <div className="form-actions">
+          <button type="submit" className="btn-primary">
+            Crear
+          </button>
+          <button type="button" className="btn-secondary" onClick={load}>
+            Recargar
+          </button>
         </div>
+      </FormSection>
 
-        <div>
-          <label>Teléfono</label>
-          <input
-            name="telefono"
-            value={form.telefono}
-            onChange={onChange}
-            placeholder="Ej: 11-1234-5678"
-          />
-        </div>
+      {/* LISTA */}
+      <section className="crud-section">
+        <header className="crud-section-header">
+          <h2>Lista de proveedores</h2>
+          <div className="crud-filters">
+            <label className="crud-filter-label">
+              <span>Filtrar por nombre</span>
+              <input
+                value={q}
+                onChange={(e) => setQ(e.target.value)}
+                placeholder="buscar..."
+              />
+            </label>
+          </div>
+        </header>
 
-        <div>
-          <label>Email</label>
-          <input
-            name="email"
-            value={form.email}
-            onChange={onChange}
-            placeholder="Ej: ventas@proveedor.com"
-          />
-        </div>
-
-        <div>
-          <label>Notas</label>
-          <input
-            name="notas"
-            value={form.notas}
-            onChange={onChange}
-            placeholder="Ej: entrega lunes/miércoles"
-          />
-        </div>
-
-        <button type="submit">Crear</button>
-        <button type="button" onClick={load}>
-          Recargar
-        </button>
-      </form>
-
-      <h2>Lista</h2>
-
-      <div>
-        <label>Filtrar por nombre</label>
-        <input
-          value={q}
-          onChange={(e) => setQ(e.target.value)}
-          placeholder="buscar..."
-        />
-      </div>
-
-      <table border="1" cellPadding="8">
-        <thead>
-          <tr>
-            <th>Nombre</th>
-            <th>Contacto</th>
-            <th>Teléfono</th>
-            <th>Email</th>
-            <th>Notas</th>
-            <th>Acciones</th>
-          </tr>
-        </thead>
-
-        <tbody>
-          {proveedoresFiltrados.map((p) => {
-            const isEditing = editId === p.id;
-
-            return (
-              <tr key={p.id}>
-                <td>
-                  {isEditing ? (
-                    <input
-                      name="nombre"
-                      value={editForm.nombre}
-                      onChange={onEditChange}
-                      required
-                    />
-                  ) : (
-                    p.nombre
-                  )}
-                </td>
-
-                <td>
-                  {isEditing ? (
-                    <input
-                      name="contacto"
-                      value={editForm.contacto}
-                      onChange={onEditChange}
-                    />
-                  ) : (
-                    p.contacto
-                  )}
-                </td>
-
-                <td>
-                  {isEditing ? (
-                    <input
-                      name="telefono"
-                      value={editForm.telefono}
-                      onChange={onEditChange}
-                    />
-                  ) : (
-                    p.telefono
-                  )}
-                </td>
-
-                <td>
-                  {isEditing ? (
-                    <input
-                      name="email"
-                      value={editForm.email}
-                      onChange={onEditChange}
-                    />
-                  ) : (
-                    p.email
-                  )}
-                </td>
-
-                <td>
-                  {isEditing ? (
-                    <input
-                      name="notas"
-                      value={editForm.notas}
-                      onChange={onEditChange}
-                    />
-                  ) : (
-                    p.notas
-                  )}
-                </td>
-
-                <td>
-                  {!isEditing ? (
-                    <>
-                      <button type="button" onClick={() => startEdit(p)}>
-                        Editar
-                      </button>
-                      <button type="button" onClick={() => onDelete(p.id)}>
-                        Eliminar
-                      </button>
-                    </>
-                  ) : (
-                    <>
-                      <button type="button" onClick={saveEdit}>
-                        Guardar
-                      </button>
-                      <button type="button" onClick={cancelEdit}>
-                        Cancelar
-                      </button>
-                    </>
-                  )}
-                </td>
+        <div className="crud-table-wrapper">
+          <table className="crud-table">
+            <thead>
+              <tr>
+                <th>Nombre</th>
+                <th>Contacto</th>
+                <th>Teléfono</th>
+                <th>Email</th>
+                <th>Notas</th>
+                <th>Acciones</th>
               </tr>
-            );
-          })}
+            </thead>
 
-          {!loading && proveedoresFiltrados.length === 0 && (
-            <tr>
-              <td colSpan="6">No hay proveedores.</td>
-            </tr>
-          )}
-        </tbody>
-      </table>
-    </div>
+            <tbody>
+              {proveedoresFiltrados.map((p) => {
+                const isEditing = editId === p.id;
+
+                return (
+                  <tr key={p.id}>
+                    <td>
+                      {isEditing ? (
+                        <input
+                          name="nombre"
+                          value={editForm.nombre}
+                          onChange={onEditChange}
+                          required
+                        />
+                      ) : (
+                        p.nombre
+                      )}
+                    </td>
+
+                    <td>
+                      {isEditing ? (
+                        <input
+                          name="contacto"
+                          value={editForm.contacto}
+                          onChange={onEditChange}
+                        />
+                      ) : (
+                        p.contacto
+                      )}
+                    </td>
+
+                    <td>
+                      {isEditing ? (
+                        <input
+                          name="telefono"
+                          value={editForm.telefono}
+                          onChange={onEditChange}
+                        />
+                      ) : (
+                        p.telefono
+                      )}
+                    </td>
+
+                    <td>
+                      {isEditing ? (
+                        <input
+                          name="email"
+                          value={editForm.email}
+                          onChange={onEditChange}
+                        />
+                      ) : (
+                        p.email
+                      )}
+                    </td>
+
+                    <td>
+                      {isEditing ? (
+                        <input
+                          name="notas"
+                          value={editForm.notas}
+                          onChange={onEditChange}
+                        />
+                      ) : (
+                        p.notas
+                      )}
+                    </td>
+
+                    <td>
+                      {!isEditing ? (
+                        <div className="crud-actions">
+                          <button
+                            type="button"
+                            className="icon-btn"
+                            onClick={() => startEdit(p)}
+                            title="Editar"
+                          >
+                            ✏️
+                          </button>
+
+                          <button
+                            type="button"
+                            className="icon-btn delete"
+                            onClick={() => onDelete(p.id)}
+                            title="Eliminar"
+                          >
+                            🗑️
+                          </button>
+                        </div>
+                      ) : (
+                        <>
+                          <button
+                            type="button"
+                            className="btn-primary"
+                            onClick={saveEdit}
+                          >
+                            Guardar
+                          </button>
+                          <button
+                            type="button"
+                            className="btn-secondary"
+                            onClick={cancelEdit}
+                          >
+                            Cancelar
+                          </button>
+                        </>
+                      )}
+                    </td>
+                  </tr>
+                );
+              })}
+
+              {!loading && proveedoresFiltrados.length === 0 && (
+                <tr>
+                  <td colSpan="6">No hay proveedores.</td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      </section>
+    </LayoutCrud>
   );
 }

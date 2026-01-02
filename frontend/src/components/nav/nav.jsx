@@ -1,7 +1,8 @@
-// frontend/src/components/nav.jsx
+// frontend/src/components/nav/nav.jsx
 import { NavLink } from "react-router-dom";
 import { useEffect, useState } from "react";
-import { getPedidos } from "../api";
+// ⬇️ Ajustamos la ruta porque ahora estamos en /components/nav/
+import { getPedidos } from "../../api";
 import "./nav.css";
 
 function linkClassName({ isActive }) {
@@ -11,7 +12,6 @@ function linkClassName({ isActive }) {
 export default function Nav() {
   const [totalPedidosActivos, setTotalPedidosActivos] = useState(0);
 
-  // ❗ estado para colapsables
   const [open, setOpen] = useState({
     base: true,
     operativa: true,
@@ -47,12 +47,12 @@ export default function Nav() {
       {/* Header */}
       <div className="sidebar-header">
         <div className="sidebar-logo">
-  <img
-    src="/src/assets/logo-obsidian.png"
-    alt="OBSIDIAN logo"
-    className="sidebar-logo-img"
-  />
-</div>
+          <img
+            src="/src/assets/logo-obsidian.png"
+            alt="OBSIDIAN logo"
+            className="sidebar-logo-img"
+          />
+        </div>
 
         <div className="sidebar-title">
           <span className="sidebar-title-name">OBSIDIAN</span>
@@ -61,15 +61,21 @@ export default function Nav() {
       </div>
 
       <nav className="sidebar-nav">
-
         {/* ================= BASE ================= */}
         <div className="sidebar-section">
-          <button className="sidebar-section-toggle" onClick={() => toggle("base")}>
+          <button
+            className="sidebar-section-toggle"
+            onClick={() => toggle("base")}
+          >
             <span>Base</span>
             <span className={`caret ${open.base ? "open" : ""}`}>▸</span>
           </button>
 
-          <div className={`sidebar-section-content ${open.base ? "open" : ""}`}>
+          <div
+            className={`sidebar-section-content ${
+              open.base ? "open" : ""
+            }`}
+          >
             <NavLink to="/materiales" className={linkClassName}>
               Materiales
             </NavLink>
@@ -95,7 +101,11 @@ export default function Nav() {
             <span className={`caret ${open.operativa ? "open" : ""}`}>▸</span>
           </button>
 
-          <div className={`sidebar-section-content ${open.operativa ? "open" : ""}`}>
+          <div
+            className={`sidebar-section-content ${
+              open.operativa ? "open" : ""
+            }`}
+          >
             <NavLink to="/produccion" className={linkClassName}>
               Producción
             </NavLink>
@@ -127,7 +137,11 @@ export default function Nav() {
             <span className={`caret ${open.finanzas ? "open" : ""}`}>▸</span>
           </button>
 
-          <div className={`sidebar-section-content ${open.finanzas ? "open" : ""}`}>
+          <div
+            className={`sidebar-section-content ${
+              open.finanzas ? "open" : ""
+            }`}
+          >
             <NavLink to="/gastos" className={linkClassName}>
               Gastos
             </NavLink>
