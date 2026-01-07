@@ -38,7 +38,7 @@ app.get("/health", (req, res) => {
   res.json({ ok: true, name: "obsidian-api", time: new Date().toISOString() });
 });
 
-// Rutas
+// Rutas API
 app.use("/materiales", materialesRoutes);
 app.use("/proveedores", proveedoresRoutes);
 app.use("/productos", productosRoutes);
@@ -59,6 +59,20 @@ app.use("/upload", uploadRoutes);
 
 // NUEVO: gastos
 app.use("/gastos", gastosRoutes);
+
+// =========================
+// Servir FRONTEND (build Vite)
+// =========================
+const frontendPath = path.join(__dirname, "../../frontend/dist");
+
+// Servir archivos estáticos del build
+app.use(express.static(frontendPath));
+
+// Para React Router: devolver siempre index.html en rutas no-API
+// (Express 5: usamos app.use en vez de app.get("*"))
+app.use((req, res) => {
+  res.sendFile(path.join(frontendPath, "index.html"));
+});
 
 app.listen(PORT, () => {
   console.log(`✅ Obsidian API running on http://localhost:${PORT}`);
