@@ -32,20 +32,24 @@ export default function Produccion() {
   const [error, setError] = useState("");
   const [mensaje, setMensaje] = useState("");
 
+  // ✅ paso 1: tipo general
+  const [tipoBase, setTipoBase] = useState("");
+  // ✅ paso 2: variante (producto)
   const [productoBaseId, setProductoBaseId] = useState("");
+  // ✅ paso 3: modelo opcional (producción)
   const [modeloId, setModeloId] = useState("");
 
-  // ✅ nuevo: ingreso por “producción” o “compra”
+  // ingreso por “producción” o “compra”
   const [tipoMovimiento, setTipoMovimiento] = useState("produccion");
 
-  // cantidad final a sumar
+  // no-sticker / fallback
   const [cantidad, setCantidad] = useState(1);
 
-  // ✅ sticker: planchas → unidades
+  // stickers: planchas → unidades
   const [planchasBuenas, setPlanchasBuenas] = useState(1);
-  const [unidadesBuenasOverride, setUnidadesBuenasOverride] = useState(""); // si querés override
+  const [unidadesBuenasOverride, setUnidadesBuenasOverride] = useState("");
 
-  // compras: detalle libre
+  // compras: detalle libre (obligatorio)
   const [detalle, setDetalle] = useState("");
 
   async function loadDatos() {
@@ -73,21 +77,35 @@ export default function Produccion() {
     loadDatos();
   }, []);
 
-  const baseSeleccionada = useMemo(
+  // tipos desde productos base
+  const tiposDisponibles = useMemo(() => {
+    const set = new Set();
+    (productosBase || []).forEach((p) => {
+      const t = normTipoBase(p?.tipoBase);
+      if (t) set.add(t);
+    });
+    return Array.from(set).sort();
+  }, [productosBase]);
+
+  const productosFiltradosPorTipo = useMemo(() => {
+    const t = normTipoBase(tipoBase);
+    if (!t) return [];
+    return (productosBase || []).filter((p) => normTipoBase(p?.tipoBase) === t);
+  }, [productosBase, tipoBase]);
+
+  const productoSeleccionado = useMemo(
     () => productosBase.find((b) => b.id === productoBaseId),
     [productosBase, productoBaseId]
   );
 
   const tipoBaseSel = useMemo(
-    () => normTipoBase(baseSeleccionada?.tipoBase),
-    [baseSeleccionada]
+    () => normTipoBase(productoSeleccionado?.tipoBase || tipoBase),
+    [productoSeleccionado, tipoBase]
   );
 
   const modelosDisponibles = useMemo(() => {
     if (!tipoBaseSel) return [];
-    return modelos.filter(
-      (m) => normTipoBase(m.productoBaseTipo) === tipoBaseSel
-    );
+    return (modelos || []).filter((m) => normTipoBase(m.productoBaseTipo) === tipoBaseSel);
   }, [modelos, tipoBaseSel]);
 
   const modeloSeleccionado = useMemo(
@@ -113,20 +131,42 @@ export default function Produccion() {
     if (tipoMovimiento === "compra") setModeloId("");
   }, [tipoMovimiento]);
 
+  // si cambio el tipo, reseteo producto/modelo
+  useEffect(() => {
+    setProductoBaseId("");
+    setModeloId("");
+    setCantidad(1);
+    setPlanchasBuenas(1);
+    setUnidadesBuenasOverride("");
+  }, [tipoBase]);
+
   async function onSubmit(e) {
     e.preventDefault();
     setMensaje("");
     setError("");
 
+    if (!tipoBaseSel) {
+      setError("Elegí un tipo base");
+      return;
+    }
     if (!productoBaseId) {
-      setError("Tenés que elegir un producto base");
+      setError("Elegí una variante/producto");
       return;
     }
 
+    // compra: detalle obligatorio
+    if (tipoMovimiento === "compra" && !String(detalle || "").trim()) {
+      setError('En compras, agregá un detalle (ej: "7 Mafalda + 7 Ghibli")');
+      return;
+    }
+
+    // decidir cantidad final a sumar
     let cantFinal = Number(cantidad);
 
-    // stickers: si hay modelo con unidadesPorPlancha, preferimos auto
-    if (tipoBaseSel === "STICKER" && modeloId && unidadesPorPlancha > 0) {
+    // stickers: si hay modelo con unidadesPorPlancha, preferimos planchas→unidades (o override)
+    const esStickerCalc = tipoMovimiento === "produccion" && tipoBaseSel === "STICKER" && modeloId && unidadesPorPlancha > 0;
+
+    if (esStickerCalc) {
       if (String(unidadesBuenasOverride).trim() !== "") {
         const n = Number(unidadesBuenasOverride);
         if (Number.isNaN(n) || n <= 0) {
@@ -150,28 +190,36 @@ export default function Produccion() {
       }
     }
 
-    // compra: detalle recomendado
-    if (tipoMovimiento === "compra" && !String(detalle || "").trim()) {
-      setError("En compras, agregá un detalle (ej: 7 Mafalda + 7 Ghibli)");
-      return;
-    }
-
     try {
       const resp = await createProduccion({
         productoBaseId,
         tipoMovimiento,
         cantidad: cantFinal,
+
+        // modelo solo en producción
         modeloId: tipoMovimiento === "produccion" ? (modeloId || null) : null,
+
+        // compras: detalle, producción puede dejarlo vacío
         detalle: String(detalle || "").trim(),
+
+        // ✅ auditoría stickers (backend puede recalcular también si le mandás esto)
+        planchasBuenas: esStickerCalc ? Number(planchasBuenas || 0) : undefined,
+        unidadesBuenas: esStickerCalc && String(unidadesBuenasOverride).trim() !== ""
+          ? Number(unidadesBuenasOverride)
+          : undefined,
       });
 
-      const nombreBase = resp?.productoBaseActualizado?.nombre || "Producto base";
+      const nombreProd = resp?.productoBaseActualizado?.nombre || "Producto";
       const stock = resp?.productoBaseActualizado?.stock;
 
-      const nombreModelo =
-        modeloId ? modelos.find((m) => m.id === modeloId)?.nombreModelo || "" : "";
+      const nombreModelo = modeloId
+        ? modelos.find((m) => m.id === modeloId)?.nombreModelo || ""
+        : "";
 
-      let txt = `${tipoMovimiento === "compra" ? "Compra registrada" : "Producción registrada"}: +${cantFinal} a "${nombreBase}"`;
+      let txt =
+        `${tipoMovimiento === "compra" ? "Compra registrada" : "Producción registrada"}: ` +
+        `+${cantFinal} a "${nombreProd}"`;
+
       if (nombreModelo) txt += ` (modelo: ${nombreModelo})`;
       if (detalle) txt += ` · ${detalle}`;
       if (typeof stock === "number") txt += ` · Stock: ${stock}.`;
@@ -186,15 +234,15 @@ export default function Produccion() {
       setDetalle("");
       setPlanchasBuenas(1);
       setUnidadesBuenasOverride("");
-    } catch (e) {
-      setError(e.message || "Error registrando ingreso");
+    } catch (e2) {
+      setError(e2.message || "Error registrando ingreso");
     }
   }
 
   return (
     <LayoutCrud
       title="Ingreso de stock"
-      description="Sumá stock a tus variantes base. Puede ser por Producción o por Compra. Modelos se usan sólo cuando aplica."
+      description="Sumá stock a tus variantes (por Producción o Compra). Para stickers, podés calcular por planchas usando el modelo."
     >
       <section className="crud-section">
         {loading && <p>Cargando...</p>}
@@ -204,7 +252,7 @@ export default function Produccion() {
 
       <FormSection
         title="Registrar ingreso"
-        description="Elegí variante base. Si es sticker con modelo y unidades por plancha, se calcula automático."
+        description="Paso 1: tipo · Paso 2: variante · Paso 3: modelo opcional (solo producción)."
         onSubmit={onSubmit}
       >
         <div className="form-grid">
@@ -217,7 +265,19 @@ export default function Produccion() {
           </div>
 
           <div className="form-field">
-            <label>Producto (variante base) *</label>
+            <label>Tipo base *</label>
+            <select value={tipoBase} onChange={(e) => setTipoBase(e.target.value)} required>
+              <option value="">-- elegir tipo --</option>
+              {tiposDisponibles.map((t) => (
+                <option key={t} value={t}>
+                  {humanTipo(t)}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div className="form-field">
+            <label>Variante / Producto *</label>
             <select
               value={productoBaseId}
               onChange={(e) => {
@@ -226,18 +286,22 @@ export default function Produccion() {
                 setUnidadesBuenasOverride("");
                 setPlanchasBuenas(1);
               }}
+              disabled={!tipoBase}
               required
             >
-              <option value="">-- elegir producto base --</option>
-              {productosBase.map((b) => (
-                <option key={b.id} value={b.id}>
-                  {b.nombre} · {humanTipo(b.tipoBase)} · stock: {b.stock ?? 0}
+              <option value="">-- elegir variante --</option>
+              {productosFiltradosPorTipo.map((p) => (
+                <option key={p.id} value={p.id}>
+                  {p.nombre} · stock: {p.stock ?? 0}
                 </option>
               ))}
             </select>
+            <p className="produccion-help-text">
+              Acá elegís la variante específica (ej: <b>A5 tapa blanda</b>).
+            </p>
           </div>
 
-          {/* MODELO (solo producción y si tiene tipo) */}
+          {/* MODELO (solo producción) */}
           {tipoMovimiento === "produccion" && (
             <div className="form-field">
               <label>Modelo / diseño (opcional)</label>
@@ -257,13 +321,16 @@ export default function Produccion() {
                 ))}
               </select>
               <p className="produccion-help-text">
-                Los modelos se filtran por el <b>tipo</b> del producto seleccionado.
+                El modelo es independiente de la variante (ej: <b>Panda</b> sirve para A4/A5/tapa dura/blanda).
               </p>
             </div>
           )}
 
           {/* STICKERS: modo planchas */}
-          {tipoMovimiento === "produccion" && tipoBaseSel === "STICKER" && modeloId && unidadesPorPlancha > 0 ? (
+          {tipoMovimiento === "produccion" &&
+          tipoBaseSel === "STICKER" &&
+          modeloId &&
+          unidadesPorPlancha > 0 ? (
             <>
               <div className="form-field">
                 <label>Planchas buenas *</label>
@@ -274,7 +341,8 @@ export default function Produccion() {
                   onChange={(e) => setPlanchasBuenas(e.target.value)}
                 />
                 <p className="produccion-help-text">
-                  Se suman automáticamente: {Number(planchasBuenas || 0) * unidadesPorPlancha || 0} unidades.
+                  Se suman automáticamente:{" "}
+                  <b>{Number(planchasBuenas || 0) * unidadesPorPlancha || 0}</b> unidades.
                 </p>
               </div>
 
@@ -309,7 +377,7 @@ export default function Produccion() {
               <input
                 value={detalle}
                 onChange={(e) => setDetalle(e.target.value)}
-                placeholder='Ej: "7 Mafalda + 7 Ghibli" / "50 stickers transparentes Shein"'
+                placeholder='Ej: "7 Mafalda + 7 Ghibli" / "50 stickers Shein"'
               />
             </div>
           )}
@@ -337,6 +405,7 @@ export default function Produccion() {
               <tr>
                 <th>Fecha</th>
                 <th>Tipo</th>
+                <th>Tipo base</th>
                 <th>Producto</th>
                 <th>Modelo</th>
                 <th>Cantidad</th>
@@ -348,14 +417,17 @@ export default function Produccion() {
                 .slice()
                 .sort((a, b) => String(b.fecha).localeCompare(String(a.fecha)))
                 .map((m) => {
-                  const base = productosBase.find((p) => p.id === m.productoBaseId);
+                  const prod = productosBase.find((p) => p.id === m.productoBaseId);
                   const mod = modelos.find((x) => x.id === m.modeloId);
+
+                  const tipo = normTipoBase(prod?.tipoBase);
 
                   return (
                     <tr key={m.id}>
                       <td>{m.fecha ? new Date(m.fecha).toLocaleString() : "-"}</td>
                       <td>{m.tipoMovimiento === "compra" ? "Compra" : "Producción"}</td>
-                      <td>{base?.nombre || m.productoBaseId}</td>
+                      <td>{tipo ? humanTipo(tipo) : "—"}</td>
+                      <td>{prod?.nombre || m.productoBaseId}</td>
                       <td>{mod?.nombreModelo || "—"}</td>
                       <td>{m.incrementoStock ?? m.cantidad ?? 0}</td>
                       <td>{m.detalle || "—"}</td>
@@ -365,7 +437,7 @@ export default function Produccion() {
 
               {!loading && (!movimientos || movimientos.length === 0) && (
                 <tr>
-                  <td colSpan="6">Todavía no hay ingresos registrados.</td>
+                  <td colSpan="7">Todavía no hay ingresos registrados.</td>
                 </tr>
               )}
             </tbody>

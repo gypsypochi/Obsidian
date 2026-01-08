@@ -29,6 +29,18 @@ function humanTipo(v) {
     .replace(/\b\w/g, (c) => c.toUpperCase());
 }
 
+// ✅ Fallback para que Modelos funcione aunque todavía no existan productos base creados
+const TIPOS_FALLBACK = [
+  "CUADERNO",
+  "AGENDA",
+  "STICKER",
+  "IMAN",
+  "PIN",
+  "CALENDARIO",
+  "PELUCHE",
+  "OTRO",
+];
+
 export default function Modelos() {
   const [modelos, setModelos] = useState([]);
   const [producciones, setProducciones] = useState([]);
@@ -39,7 +51,6 @@ export default function Modelos() {
   const [mensaje, setMensaje] = useState("");
 
   // ===== ALTA V2 =====
-  // ✅ ahora se elige el tipo general directamente
   const [form, setForm] = useState({
     productoBaseTipo: "",
     categoria: "",
@@ -91,8 +102,9 @@ export default function Modelos() {
     load();
   }, []);
 
-  const tiposUnicos = useMemo(() => {
-    const set = new Set();
+  // ✅ tipos de producto: dedupe de productos + fallback fijo
+  const tiposDisponibles = useMemo(() => {
+    const set = new Set(TIPOS_FALLBACK.map(normTipoBase));
     (productosBase || []).forEach((b) => {
       const t = normTipoBase(b?.tipoBase);
       if (t) set.add(t);
@@ -100,8 +112,14 @@ export default function Modelos() {
     return Array.from(set).sort();
   }, [productosBase]);
 
-  const formTipoNorm = useMemo(() => normTipoBase(form.productoBaseTipo), [form.productoBaseTipo]);
-  const editTipoNorm = useMemo(() => normTipoBase(editForm.productoBaseTipo), [editForm.productoBaseTipo]);
+  const formTipoNorm = useMemo(
+    () => normTipoBase(form.productoBaseTipo),
+    [form.productoBaseTipo]
+  );
+  const editTipoNorm = useMemo(
+    () => normTipoBase(editForm.productoBaseTipo),
+    [editForm.productoBaseTipo]
+  );
 
   function onFormChange(e) {
     const { name, value } = e.target;
@@ -150,7 +168,9 @@ export default function Modelos() {
     setError("");
     setMensaje("");
 
-    if (!form.productoBaseTipo) {
+    const tipo = normTipoBase(form.productoBaseTipo);
+
+    if (!tipo) {
       setError("Tenés que seleccionar el tipo (CUADERNO / STICKER / IMÁN / ...)");
       return;
     }
@@ -161,7 +181,7 @@ export default function Modelos() {
     }
 
     let upp = 0;
-    if (formTipoNorm === "STICKER") {
+    if (tipo === "STICKER") {
       if (String(form.unidadesPorPlancha).trim() !== "") {
         const n = Number(form.unidadesPorPlancha);
         if (Number.isNaN(n) || n <= 0) {
@@ -173,13 +193,13 @@ export default function Modelos() {
     }
 
     const payload = {
-      productoBaseTipo: form.productoBaseTipo,
+      productoBaseTipo: tipo, // ✅ normalizado
       categoria: form.categoria,
       subcategoria: form.subcategoria,
       nombreModelo: form.nombreModelo,
       imagenPreview: form.imagenPreview,
       archivos: form.archivos,
-      unidadesPorPlancha: upp, // ✅
+      unidadesPorPlancha: upp,
     };
 
     try {
@@ -195,8 +215,8 @@ export default function Modelos() {
         unidadesPorPlancha: "",
       });
       await load();
-    } catch (e) {
-      setError(e.message || "Error creando modelo");
+    } catch (e2) {
+      setError(e2.message || "Error creando modelo");
     }
   }
 
@@ -282,17 +302,19 @@ export default function Modelos() {
     setError("");
     setMensaje("");
 
+    const tipo = normTipoBase(editForm.productoBaseTipo);
+
     if (!editForm.nombreModelo.trim()) {
       setError("El nombre del modelo no puede estar vacío");
       return;
     }
-    if (!editForm.productoBaseTipo) {
+    if (!tipo) {
       setError("Tipo base es obligatorio");
       return;
     }
 
     let upp = 0;
-    if (editTipoNorm === "STICKER") {
+    if (tipo === "STICKER") {
       if (String(editForm.unidadesPorPlancha).trim() !== "") {
         const n = Number(editForm.unidadesPorPlancha);
         if (Number.isNaN(n) || n <= 0) {
@@ -304,7 +326,7 @@ export default function Modelos() {
     }
 
     const payload = {
-      productoBaseTipo: editForm.productoBaseTipo,
+      productoBaseTipo: tipo, // ✅ normalizado
       categoria: editForm.categoria,
       subcategoria: editForm.subcategoria,
       nombreModelo: editForm.nombreModelo,
@@ -318,8 +340,8 @@ export default function Modelos() {
       setMensaje("Modelo actualizado.");
       cancelEdit();
       await load();
-    } catch (e) {
-      setError(e.message || "Error actualizando modelo");
+    } catch (e2) {
+      setError(e2.message || "Error actualizando modelo");
     }
   }
 
@@ -333,8 +355,8 @@ export default function Modelos() {
       await deleteModelo(id);
       setMensaje("Modelo eliminado.");
       await load();
-    } catch (e) {
-      setError(e.message || "Error eliminando modelo");
+    } catch (e2) {
+      setError(e2.message || "Error eliminando modelo");
     }
   }
 
@@ -355,8 +377,10 @@ export default function Modelos() {
       const actual = map.get(p.modeloId) || { veces: 0, unidades: 0 };
       actual.veces += 1;
 
-      const inc = Number(p.incrementoStock || p.cantidad || 0);
-      actual.unidades += inc;
+      // ✅ robusto con distintos campos y ceros
+      const inc =
+        (p.incrementoStock ?? p.unidadesBuenas ?? p.cantidad ?? 0);
+      actual.unidades += Number(inc || 0);
 
       map.set(p.modeloId, actual);
     });
@@ -376,11 +400,20 @@ export default function Modelos() {
 
   const modelosFiltrados = useMemo(() => {
     return modelos.filter((m) => {
-      if (fProductoBaseTipo && normTipoBase(m.productoBaseTipo) !== normTipoBase(fProductoBaseTipo)) return false;
+      if (
+        fProductoBaseTipo &&
+        normTipoBase(m.productoBaseTipo) !== normTipoBase(fProductoBaseTipo)
+      ) return false;
 
-      if (fCategoria.trim() && !String(m.categoria || "").toLowerCase().includes(fCategoria.trim().toLowerCase())) return false;
+      if (
+        fCategoria.trim() &&
+        !String(m.categoria || "").toLowerCase().includes(fCategoria.trim().toLowerCase())
+      ) return false;
 
-      if (fSubcategoria.trim() && !String(m.subcategoria || "").toLowerCase().includes(fSubcategoria.trim().toLowerCase())) return false;
+      if (
+        fSubcategoria.trim() &&
+        !String(m.subcategoria || "").toLowerCase().includes(fSubcategoria.trim().toLowerCase())
+      ) return false;
 
       if (fTexto.trim()) {
         const term = fTexto.trim().toLowerCase();
@@ -394,7 +427,9 @@ export default function Modelos() {
 
   function getPlanchaUrl(m) {
     if (Array.isArray(m.archivos) && m.archivos.length > 0) {
-      const pdf = m.archivos.find((a) => (a.tipo || "").toLowerCase() === "pdf") || m.archivos[0];
+      const pdf =
+        m.archivos.find((a) => (a.tipo || "").toLowerCase() === "pdf") ||
+        m.archivos[0];
       return pdf?.url || "";
     }
     return m.archivoPlancha || "";
@@ -435,7 +470,7 @@ export default function Modelos() {
                       required
                     >
                       <option value="">-- elegir tipo --</option>
-                      {tiposUnicos.map((t) => (
+                      {tiposDisponibles.map((t) => (
                         <option key={t} value={t}>
                           {humanTipo(t)}
                         </option>
@@ -540,7 +575,7 @@ export default function Modelos() {
               <label>Tipo base</label>
               <select value={fProductoBaseTipo} onChange={(e) => setFProductoBaseTipo(e.target.value)}>
                 <option value="">Todos</option>
-                {tiposUnicos.map((t) => (
+                {tiposDisponibles.map((t) => (
                   <option key={t} value={t}>
                     {humanTipo(t)}
                   </option>
@@ -613,7 +648,7 @@ export default function Modelos() {
                           required
                         >
                           <option value="">-- elegir tipo --</option>
-                          {tiposUnicos.map((t) => (
+                          {tiposDisponibles.map((t) => (
                             <option key={t} value={t}>
                               {humanTipo(t)}
                             </option>
@@ -721,7 +756,9 @@ export default function Modelos() {
 
                     <div className="model-card__tags">
                       {m.productoBaseTipo && (
-                        <span className="model-card__tag model-card__tag--categoria">{humanTipo(m.productoBaseTipo)}</span>
+                        <span className="model-card__tag model-card__tag--categoria">
+                          {humanTipo(m.productoBaseTipo)}
+                        </span>
                       )}
                       {m.categoria && (
                         <span className="model-card__tag model-card__tag--categoria">{m.categoria}</span>
@@ -729,9 +766,10 @@ export default function Modelos() {
                       {m.subcategoria && (
                         <span className="model-card__tag model-card__tag--subcategoria">{m.subcategoria}</span>
                       )}
-                      {normTipoBase(m.productoBaseTipo) === "STICKER" && Number(m.unidadesPorPlancha || 0) > 0 && (
-                        <span className="model-card__tag">x{m.unidadesPorPlancha}/plancha</span>
-                      )}
+                      {normTipoBase(m.productoBaseTipo) === "STICKER" &&
+                        Number(m.unidadesPorPlancha || 0) > 0 && (
+                          <span className="model-card__tag">x{m.unidadesPorPlancha}/plancha</span>
+                        )}
                     </div>
 
                     {stats && (
