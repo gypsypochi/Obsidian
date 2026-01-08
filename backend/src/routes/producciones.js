@@ -11,6 +11,10 @@ const {
   writeHistorialStock,
   readModelos,
   writeModelos,
+
+  // ✅ NUEVO: materiales
+  readMaterials,
+  writeMaterials,
 } = require("../utils/fileDB");
 
 function normTipoBase(v) {
@@ -37,6 +41,17 @@ function resolveStockTarget(productos, productoSeleccionado) {
   return productoSeleccionado;
 }
 
+// Normaliza consumos de materiales (array opcional)
+function normalizeMaterialesConsumidos(input) {
+  if (!Array.isArray(input)) return [];
+  return input
+    .map((x) => ({
+      materialId: String(x?.materialId || "").trim(),
+      cantidad: Number(x?.cantidad),
+    }))
+    .filter((x) => x.materialId && !Number.isNaN(x.cantidad) && x.cantidad > 0);
+}
+
 // GET /producciones
 router.get("/", (req, res) => {
   try {
@@ -59,7 +74,9 @@ router.get("/", (req, res) => {
 //   detalle?,
 //   // stickers:
 //   planchasBuenas?,
-//   unidadesBuenas?
+//   unidadesBuenas?,
+//   // ✅ NUEVO (solo producción):
+//   materialesConsumidos?: [{ materialId, cantidad }]
 // }
 router.post("/", (req, res) => {
   try {
@@ -71,6 +88,9 @@ router.post("/", (req, res) => {
       detalle,
       planchasBuenas,
       unidadesBuenas,
+
+      // ✅ NUEVO
+      materialesConsumidos,
     } = req.body;
 
     if (!productoBaseId) {
@@ -158,6 +178,44 @@ router.post("/", (req, res) => {
       return res.status(400).json({ error: "En compras, detalle es obligatorio" });
     }
 
+    // ========= ✅ MATERIALES (solo producción) =========
+    const consumos = mov === "produccion" ? normalizeMaterialesConsumidos(materialesConsumidos) : [];
+
+    if (mov === "produccion" && consumos.length > 0) {
+      const materiales = readMaterials();
+
+      // Validación fuerte: existencia + stock suficiente
+      for (const c of consumos) {
+        const idxMat = materiales.findIndex((m) => m.id === c.materialId);
+        if (idxMat === -1) {
+          return res.status(400).json({ error: `Material no encontrado: ${c.materialId}` });
+        }
+
+        const stockMat = Number(materiales[idxMat].stock || 0);
+        const cantCons = Number(c.cantidad || 0);
+
+        if (Number.isNaN(cantCons) || cantCons <= 0) {
+          return res.status(400).json({ error: "Cantidad de material consumido inválida" });
+        }
+
+        if (stockMat < cantCons) {
+          return res.status(400).json({
+            error: `Stock insuficiente en material "${materiales[idxMat].nombre || c.materialId}"`,
+            detalle: { materialId: c.materialId, stockActual: stockMat, cantidadSolicitada: cantCons },
+          });
+        }
+      }
+
+      // Descontar
+      for (const c of consumos) {
+        const idxMat = materiales.findIndex((m) => m.id === c.materialId);
+        const stockMat = Number(materiales[idxMat].stock || 0);
+        materiales[idxMat].stock = stockMat - Number(c.cantidad);
+      }
+
+      writeMaterials(materiales);
+    }
+
     // ========= sumar stock producto TARGET =========
     const stockAntes = Number(productos[idxTarget].stock || 0);
     const stockDespues = stockAntes + cantFinal;
@@ -200,6 +258,9 @@ router.post("/", (req, res) => {
       // extras (auditoría stickers)
       stickerInfo: stickerInfo || null,
 
+      // ✅ NUEVO: auditoría de consumos
+      materialesConsumidos: mov === "produccion" ? consumos : [],
+
       detalle: detalleFinal,
       fecha: new Date().toISOString(),
     };
@@ -207,11 +268,11 @@ router.post("/", (req, res) => {
     producciones.push(nueva);
     writeProducciones(producciones);
 
-    // historial stock
+    // historial stock (productos)
     const historial = readHistorialStock();
     historial.push({
       id: `hist-${Date.now()}`,
-      // impacta stock real
+      // impacta stock real del producto
       productoId: prodTarget.id,
       tipoMovimiento: mov,
       cantidad: cantFinal,
@@ -230,8 +291,13 @@ router.post("/", (req, res) => {
 
     res.status(201).json({
       movimiento: nueva,
+
+      // ✅ mantenemos tus nombres actuales
       productoStockActualizado: productos[idxTarget],
       productoVariante: prodSeleccionado,
+
+      // ✅ ALIAS para que el front no dependa del nombre
+      productoBaseActualizado: productos[idxTarget],
     });
   } catch (err) {
     console.error("Error registrando ingreso:", err);
