@@ -5,7 +5,6 @@ const path = require("path");
 const materialesPath = path.join(__dirname, "../../../data/materiales.json");
 const proveedoresPath = path.join(__dirname, "../../../data/proveedores.json");
 const productosPath = path.join(__dirname, "../../../data/productos.json");
-const recetasPath = path.join(__dirname, "../../../data/recetas.json");
 const produccionesPath = path.join(__dirname, "../../../data/producciones.json");
 const historialStockPath = path.join(__dirname, "../../../data/historial-stock.json");
 const modelosPath = path.join(__dirname, "../../../data/modelos.json");
@@ -47,13 +46,6 @@ function writeProductos(productos) {
   writeJson(productosPath, productos);
 }
 
-// Recetas
-function readRecetas() {
-  return readJson(recetasPath);
-}
-function writeRecetas(recetas) {
-  writeJson(recetasPath, recetas);
-}
 
 // Producciones
 function readProducciones() {
@@ -153,8 +145,6 @@ module.exports = {
   writeProveedores,
   readProductos,
   writeProductos,
-  readRecetas,
-  writeRecetas,
   readProducciones,
   writeProducciones,
   readHistorialStock,

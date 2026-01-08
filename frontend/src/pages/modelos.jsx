@@ -5,61 +5,81 @@ import {
   createModelo,
   updateModelo,
   deleteModelo,
-  getProductos,
   uploadImagen,
   uploadPlancha,
   getProducciones,
+  getProductosBase,
 } from "../api";
 import LayoutModels from "../components/layout-models/layout-models";
 import { FormSection } from "../components/form/form";
 
+function normTipoBase(v) {
+  return String(v || "")
+    .trim()
+    .toUpperCase()
+    .replace(/\s+/g, "_");
+}
+
+function humanTipo(v) {
+  const s = String(v || "").trim();
+  if (!s) return "";
+  return s
+    .toLowerCase()
+    .replace(/_/g, " ")
+    .replace(/\b\w/g, (c) => c.toUpperCase());
+}
+
 export default function Modelos() {
   const [modelos, setModelos] = useState([]);
-  const [productos, setProductos] = useState([]);
   const [producciones, setProducciones] = useState([]);
+  const [productosBase, setProductosBase] = useState([]);
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [mensaje, setMensaje] = useState("");
 
+  // ===== ALTA V2 =====
+  // ✅ ahora se elige el tipo general directamente
   const [form, setForm] = useState({
-    productoId: "",
+    productoBaseTipo: "",
     categoria: "",
     subcategoria: "",
     nombreModelo: "",
-    imagenRef: "",
-    archivoPlancha: "",
+    imagenPreview: "",
+    archivos: [], // [{label,tipo,url}]
+    unidadesPorPlancha: "", // solo STICKER
   });
 
+  // ===== EDICIÓN =====
   const [editId, setEditId] = useState(null);
   const [editForm, setEditForm] = useState({
-    productoId: "",
+    productoBaseTipo: "",
     categoria: "",
     subcategoria: "",
     nombreModelo: "",
-    imagenRef: "",
-    archivoPlancha: "",
+    imagenPreview: "",
+    archivos: [],
+    unidadesPorPlancha: "",
   });
 
   // Filtros
-  const [fProductoBase, setFProductoBase] = useState("");
+  const [fProductoBaseTipo, setFProductoBaseTipo] = useState("");
   const [fCategoria, setFCategoria] = useState("");
   const [fSubcategoria, setFSubcategoria] = useState("");
   const [fTexto, setFTexto] = useState("");
 
-  // ---------- CARGA DE DATOS ----------
   async function load() {
     try {
       setError("");
       setLoading(true);
-      const [mods, prods, prodsHist] = await Promise.all([
+      const [mods, prodsHist, bases] = await Promise.all([
         getModelos(),
-        getProductos(),
         getProducciones(),
+        getProductosBase(),
       ]);
-      setModelos(mods);
-      setProductos(prods);
-      setProducciones(prodsHist);
+      setModelos(mods || []);
+      setProducciones(prodsHist || []);
+      setProductosBase(bases || []);
     } catch (e) {
       setError(e.message || "Error cargando modelos");
     } finally {
@@ -71,13 +91,21 @@ export default function Modelos() {
     load();
   }, []);
 
-  // ---------- FORMULARIO ALTA ----------
+  const tiposUnicos = useMemo(() => {
+    const set = new Set();
+    (productosBase || []).forEach((b) => {
+      const t = normTipoBase(b?.tipoBase);
+      if (t) set.add(t);
+    });
+    return Array.from(set).sort();
+  }, [productosBase]);
+
+  const formTipoNorm = useMemo(() => normTipoBase(form.productoBaseTipo), [form.productoBaseTipo]);
+  const editTipoNorm = useMemo(() => normTipoBase(editForm.productoBaseTipo), [editForm.productoBaseTipo]);
+
   function onFormChange(e) {
     const { name, value } = e.target;
-    setForm((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
+    setForm((prev) => ({ ...prev, [name]: value }));
   }
 
   async function handleImagenFileChange(e) {
@@ -88,13 +116,9 @@ export default function Modelos() {
       setError("");
       setMensaje("Subiendo imagen...");
       const data = await uploadImagen(file);
-      setForm((prev) => ({
-        ...prev,
-        imagenRef: data.url,
-      }));
+      setForm((prev) => ({ ...prev, imagenPreview: data.url }));
       setMensaje("Imagen subida correctamente.");
     } catch (err) {
-      console.error(err);
       setError(err.message || "Error subiendo imagen");
       setMensaje("");
     }
@@ -106,16 +130,17 @@ export default function Modelos() {
 
     try {
       setError("");
-      setMensaje("Subiendo plancha...");
+      setMensaje("Subiendo PDF...");
       const data = await uploadPlancha(file);
+
       setForm((prev) => ({
         ...prev,
-        archivoPlancha: data.url,
+        archivos: [{ label: "Plancha", tipo: "pdf", url: data.url }],
       }));
-      setMensaje("Plancha subida correctamente.");
+
+      setMensaje("PDF subido correctamente.");
     } catch (err) {
-      console.error(err);
-      setError(err.message || "Error subiendo plancha");
+      setError(err.message || "Error subiendo PDF");
       setMensaje("");
     }
   }
@@ -125,26 +150,49 @@ export default function Modelos() {
     setError("");
     setMensaje("");
 
-    if (!form.productoId) {
-      setError("Tenés que seleccionar un producto base");
+    if (!form.productoBaseTipo) {
+      setError("Tenés que seleccionar el tipo (CUADERNO / STICKER / IMÁN / ...)");
       return;
     }
 
     if (!form.nombreModelo.trim()) {
-      setError("Tenés que indicar un nombre de modelo/plancha");
+      setError("Tenés que indicar un nombre de modelo/diseño");
       return;
     }
 
+    let upp = 0;
+    if (formTipoNorm === "STICKER") {
+      if (String(form.unidadesPorPlancha).trim() !== "") {
+        const n = Number(form.unidadesPorPlancha);
+        if (Number.isNaN(n) || n <= 0) {
+          setError("Unidades por plancha debe ser un número > 0");
+          return;
+        }
+        upp = n;
+      }
+    }
+
+    const payload = {
+      productoBaseTipo: form.productoBaseTipo,
+      categoria: form.categoria,
+      subcategoria: form.subcategoria,
+      nombreModelo: form.nombreModelo,
+      imagenPreview: form.imagenPreview,
+      archivos: form.archivos,
+      unidadesPorPlancha: upp, // ✅
+    };
+
     try {
-      await createModelo(form);
+      await createModelo(payload);
       setMensaje("Modelo creado correctamente.");
       setForm({
-        productoId: "",
+        productoBaseTipo: "",
         categoria: "",
         subcategoria: "",
         nombreModelo: "",
-        imagenRef: "",
-        archivoPlancha: "",
+        imagenPreview: "",
+        archivos: [],
+        unidadesPorPlancha: "",
       });
       await load();
     } catch (e) {
@@ -152,37 +200,47 @@ export default function Modelos() {
     }
   }
 
-  // ---------- EDICIÓN ----------
+  // ===== EDICIÓN =====
   function startEdit(m) {
     setEditId(m.id);
+
+    const archivos =
+      Array.isArray(m.archivos) && m.archivos.length > 0
+        ? m.archivos
+        : m.archivoPlancha
+        ? [{ label: "Plancha", tipo: "pdf", url: m.archivoPlancha }]
+        : [];
+
     setEditForm({
-      productoId: m.productoId || "",
+      productoBaseTipo: m.productoBaseTipo || "",
       categoria: m.categoria || "",
       subcategoria: m.subcategoria || "",
       nombreModelo: m.nombreModelo || "",
-      imagenRef: m.imagenRef || "",
-      archivoPlancha: m.archivoPlancha || "",
+      imagenPreview: m.imagenPreview || m.imagenRef || "",
+      archivos,
+      unidadesPorPlancha:
+        m.unidadesPorPlancha !== undefined && m.unidadesPorPlancha !== null
+          ? String(m.unidadesPorPlancha)
+          : "",
     });
   }
 
   function cancelEdit() {
     setEditId(null);
     setEditForm({
-      productoId: "",
+      productoBaseTipo: "",
       categoria: "",
       subcategoria: "",
       nombreModelo: "",
-      imagenRef: "",
-      archivoPlancha: "",
+      imagenPreview: "",
+      archivos: [],
+      unidadesPorPlancha: "",
     });
   }
 
   function onEditChange(e) {
     const { name, value } = e.target;
-    setEditForm((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
+    setEditForm((prev) => ({ ...prev, [name]: value }));
   }
 
   async function handleImagenFileChangeEdit(e) {
@@ -193,13 +251,9 @@ export default function Modelos() {
       setError("");
       setMensaje("Subiendo nueva imagen...");
       const data = await uploadImagen(file);
-      setEditForm((prev) => ({
-        ...prev,
-        imagenRef: data.url,
-      }));
+      setEditForm((prev) => ({ ...prev, imagenPreview: data.url }));
       setMensaje("Imagen actualizada.");
     } catch (err) {
-      console.error(err);
       setError(err.message || "Error subiendo imagen");
       setMensaje("");
     }
@@ -211,16 +265,15 @@ export default function Modelos() {
 
     try {
       setError("");
-      setMensaje("Subiendo nueva plancha...");
+      setMensaje("Subiendo nuevo PDF...");
       const data = await uploadPlancha(file);
       setEditForm((prev) => ({
         ...prev,
-        archivoPlancha: data.url,
+        archivos: [{ label: "Plancha", tipo: "pdf", url: data.url }],
       }));
-      setMensaje("Plancha actualizada.");
+      setMensaje("PDF actualizado.");
     } catch (err) {
-      console.error(err);
-      setError(err.message || "Error subiendo plancha");
+      setError(err.message || "Error subiendo PDF");
       setMensaje("");
     }
   }
@@ -233,9 +286,35 @@ export default function Modelos() {
       setError("El nombre del modelo no puede estar vacío");
       return;
     }
+    if (!editForm.productoBaseTipo) {
+      setError("Tipo base es obligatorio");
+      return;
+    }
+
+    let upp = 0;
+    if (editTipoNorm === "STICKER") {
+      if (String(editForm.unidadesPorPlancha).trim() !== "") {
+        const n = Number(editForm.unidadesPorPlancha);
+        if (Number.isNaN(n) || n <= 0) {
+          setError("Unidades por plancha debe ser un número > 0");
+          return;
+        }
+        upp = n;
+      }
+    }
+
+    const payload = {
+      productoBaseTipo: editForm.productoBaseTipo,
+      categoria: editForm.categoria,
+      subcategoria: editForm.subcategoria,
+      nombreModelo: editForm.nombreModelo,
+      imagenPreview: editForm.imagenPreview,
+      archivos: editForm.archivos,
+      unidadesPorPlancha: upp,
+    };
 
     try {
-      await updateModelo(editId, editForm);
+      await updateModelo(editId, payload);
       setMensaje("Modelo actualizado.");
       cancelEdit();
       await load();
@@ -244,14 +323,13 @@ export default function Modelos() {
     }
   }
 
-  // ---------- ELIMINAR ----------
   async function onDelete(id) {
     const ok = window.confirm("¿Eliminar este modelo/diseño?");
     if (!ok) return;
-    setError("");
-    setMensaje("");
 
     try {
+      setError("");
+      setMensaje("");
       await deleteModelo(id);
       setMensaje("Modelo eliminado.");
       await load();
@@ -260,53 +338,24 @@ export default function Modelos() {
     }
   }
 
-  // ---------- LIMPIAR FILTROS ----------
   function handleClearFilters() {
-    setFProductoBase("");
+    setFProductoBaseTipo("");
     setFCategoria("");
     setFSubcategoria("");
     setFTexto("");
   }
 
-  // ---------- MAPAS Y STATS ----------
-  const mapaProductos = useMemo(
-    () => new Map(productos.map((p) => [p.id, p])),
-    [productos]
-  );
-
-  const opcionesCategoria = useMemo(
-    () =>
-      Array.from(
-        new Set(modelos.map((m) => m.categoria).filter(Boolean))
-      ).sort(),
-    [modelos]
-  );
-
-  const opcionesSubcategoria = useMemo(
-    () =>
-      Array.from(
-        new Set(modelos.map((m) => m.subcategoria).filter(Boolean))
-      ).sort(),
-    [modelos]
-  );
-
+  // ===== STATS =====
   const mapaStatsModelos = useMemo(() => {
     const map = new Map();
 
-    producciones.forEach((p) => {
+    (producciones || []).forEach((p) => {
       if (!p.modeloId) return;
 
       const actual = map.get(p.modeloId) || { veces: 0, unidades: 0 };
       actual.veces += 1;
 
-      let inc = 0;
-      if (typeof p.incrementoStock === "number") {
-        inc = p.incrementoStock;
-      } else if (typeof p.unidadesBuenas === "number") {
-        inc = p.unidadesBuenas;
-      } else if (typeof p.cantidad === "number") {
-        inc = p.cantidad;
-      }
+      const inc = Number(p.incrementoStock || p.cantidad || 0);
       actual.unidades += inc;
 
       map.set(p.modeloId, actual);
@@ -315,64 +364,56 @@ export default function Modelos() {
     return map;
   }, [producciones]);
 
-  // ---------- FILTROS ----------
+  const opcionesCategoria = useMemo(
+    () => Array.from(new Set(modelos.map((m) => m.categoria).filter(Boolean))).sort(),
+    [modelos]
+  );
+
+  const opcionesSubcategoria = useMemo(
+    () => Array.from(new Set(modelos.map((m) => m.subcategoria).filter(Boolean))).sort(),
+    [modelos]
+  );
+
   const modelosFiltrados = useMemo(() => {
     return modelos.filter((m) => {
-      if (fProductoBase && m.productoId !== fProductoBase) return false;
+      if (fProductoBaseTipo && normTipoBase(m.productoBaseTipo) !== normTipoBase(fProductoBaseTipo)) return false;
 
-      if (
-        fCategoria.trim() &&
-        !String(m.categoria || "")
-          .toLowerCase()
-          .includes(fCategoria.trim().toLowerCase())
-      ) {
-        return false;
-      }
+      if (fCategoria.trim() && !String(m.categoria || "").toLowerCase().includes(fCategoria.trim().toLowerCase())) return false;
 
-      if (
-        fSubcategoria.trim() &&
-        !String(m.subcategoria || "")
-          .toLowerCase()
-          .includes(fSubcategoria.trim().toLowerCase())
-      ) {
-        return false;
-      }
+      if (fSubcategoria.trim() && !String(m.subcategoria || "").toLowerCase().includes(fSubcategoria.trim().toLowerCase())) return false;
 
       if (fTexto.trim()) {
         const term = fTexto.trim().toLowerCase();
-        const textoBusqueda = [m.nombreModelo || ""]
-          .join(" ")
-          .toLowerCase();
-
-        if (!textoBusqueda.includes(term)) return false;
+        const txt = String(m.nombreModelo || "").toLowerCase();
+        if (!txt.includes(term)) return false;
       }
 
       return true;
     });
-  }, [modelos, fProductoBase, fCategoria, fSubcategoria, fTexto]);
+  }, [modelos, fProductoBaseTipo, fCategoria, fSubcategoria, fTexto]);
 
-  // ---------- RENDER ----------
+  function getPlanchaUrl(m) {
+    if (Array.isArray(m.archivos) && m.archivos.length > 0) {
+      const pdf = m.archivos.find((a) => (a.tipo || "").toLowerCase() === "pdf") || m.archivos[0];
+      return pdf?.url || "";
+    }
+    return m.archivoPlancha || "";
+  }
+
+  function getImagenUrl(m) {
+    return m.imagenPreview || m.imagenRef || "";
+  }
+
   return (
     <LayoutModels
       title="Modelos / Diseños"
-      description="Gestioná las planchas y diseños asociadas a tus productos base, con filtros por categoría, subcategoría y estadísticas de producción."
+      description="Modelos por TIPO general (CUADERNO/STICKER/IMÁN...). Para STICKER podés definir unidades por plancha."
     >
       <div className="models-page">
-        {/* Mensajes */}
         <div className="models-status">
-          {loading && (
-            <p className="models-message">Cargando modelos...</p>
-          )}
-          {error && (
-            <p className="models-message models-message--error">
-              {error}
-            </p>
-          )}
-          {mensaje && (
-            <p className="models-message models-message--success">
-              {mensaje}
-            </p>
-          )}
+          {loading && <p className="models-message">Cargando modelos...</p>}
+          {error && <p className="models-message models-message--error">{error}</p>}
+          {mensaje && <p className="models-message models-message--success">{mensaje}</p>}
         </div>
 
         {/* ALTA */}
@@ -380,24 +421,23 @@ export default function Modelos() {
           <div className="models-form-wrapper">
             <FormSection
               title="Nuevo modelo"
-              description="Creá una nueva plancha/modelo y asociála a un producto base."
+              description="Elegí el tipo general y cargá imagen + PDF. (En stickers podés guardar unidades por plancha)."
               onSubmit={onSubmit}
             >
               <div className="models-form">
-                {/* FILA 1: 4 campos en una línea */}
                 <div className="models-form-grid">
                   <div className="form-field">
-                    <label>Producto base *</label>
+                    <label>Tipo base *</label>
                     <select
-                      name="productoId"
-                      value={form.productoId}
+                      name="productoBaseTipo"
+                      value={form.productoBaseTipo}
                       onChange={onFormChange}
                       required
                     >
-                      <option value="">-- elegir producto --</option>
-                      {productos.map((p) => (
-                        <option key={p.id} value={p.id}>
-                          {p.nombre} (cat: {p.categoria || "-"})
+                      <option value="">-- elegir tipo --</option>
+                      {tiposUnicos.map((t) => (
+                        <option key={t} value={t}>
+                          {humanTipo(t)}
                         </option>
                       ))}
                     </select>
@@ -424,18 +464,34 @@ export default function Modelos() {
                   </div>
 
                   <div className="form-field">
-                    <label>Nombre del modelo / plancha *</label>
+                    <label>Nombre del modelo / diseño *</label>
                     <input
                       name="nombreModelo"
                       value={form.nombreModelo}
                       onChange={onFormChange}
                       required
-                      placeholder="Ej: HP - Tapa 1, Anime Plancha 2"
+                      placeholder="Ej: Panda, Argentina 1..."
                     />
                   </div>
+
+                  {formTipoNorm === "STICKER" && (
+                    <div className="form-field">
+                      <label>Unidades por plancha (stickers)</label>
+                      <input
+                        name="unidadesPorPlancha"
+                        type="number"
+                        min="1"
+                        value={form.unidadesPorPlancha}
+                        onChange={onFormChange}
+                        placeholder="Ej: 25"
+                      />
+                      <p className="produccion-help-text">
+                        Si lo completás, Producción suma automáticamente (planchas × unidades).
+                      </p>
+                    </div>
+                  )}
                 </div>
 
-                {/* FILA 2: botones de subida centrados */}
                 <div className="models-form-uploads-row">
                   <div className="models-upload-group">
                     <input
@@ -445,19 +501,10 @@ export default function Modelos() {
                       onChange={handleImagenFileChange}
                       className="upload-input"
                     />
-                    <label
-                      htmlFor="modelo-imagen-nuevo"
-                      className="upload-button"
-                    >
-                      <span className="upload-button-label">
-                        Subir portada
-                      </span>
+                    <label htmlFor="modelo-imagen-nuevo" className="upload-button">
+                      <span className="upload-button-label">Subir portada</span>
                     </label>
-                    {form.imagenRef && (
-                      <small className="upload-hint">
-                        Archivo listo para usar ✔
-                      </small>
-                    )}
+                    {form.imagenPreview && <small className="upload-hint">Archivo listo ✔</small>}
                   </div>
 
                   <div className="models-upload-group">
@@ -468,34 +515,16 @@ export default function Modelos() {
                       onChange={handlePlanchaFileChange}
                       className="upload-input"
                     />
-                    <label
-                      htmlFor="modelo-plancha-nuevo"
-                      className="upload-button"
-                    >
-                      <span className="upload-button-label">
-                        Subir plancha
-                      </span>
+                    <label htmlFor="modelo-plancha-nuevo" className="upload-button">
+                      <span className="upload-button-label">Subir PDF</span>
                     </label>
-                    {form.archivoPlancha && (
-                      <small className="upload-hint">
-                        PDF listo para imprimir ✔
-                      </small>
-                    )}
+                    {form.archivos.length > 0 && <small className="upload-hint">PDF listo ✔</small>}
                   </div>
                 </div>
 
-                {/* FILA 3: Crear / Recargar centrados */}
                 <div className="models-form-actions">
-                  <button type="submit" className="btn-primary">
-                    Crear modelo
-                  </button>
-                  <button
-                    type="button"
-                    onClick={load}
-                    className="btn-secondary"
-                  >
-                    Recargar
-                  </button>
+                  <button type="submit" className="btn-primary">Crear modelo</button>
+                  <button type="button" onClick={load} className="btn-secondary">Recargar</button>
                 </div>
               </div>
             </FormSection>
@@ -508,15 +537,12 @@ export default function Modelos() {
 
           <div className="models-filters">
             <div className="form-field">
-              <label>Producto base</label>
-              <select
-                value={fProductoBase}
-                onChange={(e) => setFProductoBase(e.target.value)}
-              >
+              <label>Tipo base</label>
+              <select value={fProductoBaseTipo} onChange={(e) => setFProductoBaseTipo(e.target.value)}>
                 <option value="">Todos</option>
-                {productos.map((p) => (
-                  <option key={p.id} value={p.id}>
-                    {p.nombre}
+                {tiposUnicos.map((t) => (
+                  <option key={t} value={t}>
+                    {humanTipo(t)}
                   </option>
                 ))}
               </select>
@@ -554,19 +580,11 @@ export default function Modelos() {
 
             <div className="form-field">
               <label>Buscar</label>
-              <input
-                value={fTexto}
-                onChange={(e) => setFTexto(e.target.value)}
-                placeholder="Nombre..."
-              />
+              <input value={fTexto} onChange={(e) => setFTexto(e.target.value)} placeholder="Nombre..." />
             </div>
 
             <div className="models-filters-clear">
-              <button
-                type="button"
-                onClick={handleClearFilters}
-                className="btn-secondary"
-              >
+              <button type="button" onClick={handleClearFilters} className="btn-secondary">
                 Limpiar filtros
               </button>
             </div>
@@ -574,7 +592,6 @@ export default function Modelos() {
 
           <div className="models-grid">
             {modelosFiltrados.map((m) => {
-              const prod = mapaProductos.get(m.productoId);
               const isEditing = editId === m.id;
               const stats = mapaStatsModelos.get(m.id);
 
@@ -583,32 +600,22 @@ export default function Modelos() {
 
               if (isEditing) {
                 return (
-                  <div
-                    key={m.id}
-                    className="model-card model-card--editing"
-                  >
-                    <h3 className="model-card__title">
-                      Editar modelo
-                    </h3>
-                    <p className="model-card__meta">
-                      {m.categoria || "-"}
-                      {m.subcategoria ? ` – ${m.subcategoria}` : ""}
-                    </p>
+                  <div key={m.id} className="model-card model-card--editing">
+                    <h3 className="model-card__title">Editar modelo</h3>
 
                     <div className="form-grid model-card__edit-grid">
                       <div className="form-field">
-                        <label>Producto base</label>
+                        <label>Tipo base *</label>
                         <select
-                          name="productoId"
-                          value={editForm.productoId}
+                          name="productoBaseTipo"
+                          value={editForm.productoBaseTipo}
                           onChange={onEditChange}
+                          required
                         >
-                          <option value="">
-                            -- elegir producto --
-                          </option>
-                          {productos.map((p) => (
-                            <option key={p.id} value={p.id}>
-                              {p.nombre} (cat: {p.categoria || "-"})
+                          <option value="">-- elegir tipo --</option>
+                          {tiposUnicos.map((t) => (
+                            <option key={t} value={t}>
+                              {humanTipo(t)}
                             </option>
                           ))}
                         </select>
@@ -616,20 +623,12 @@ export default function Modelos() {
 
                       <div className="form-field">
                         <label>Categoría</label>
-                        <input
-                          name="categoria"
-                          value={editForm.categoria}
-                          onChange={onEditChange}
-                        />
+                        <input name="categoria" value={editForm.categoria} onChange={onEditChange} />
                       </div>
 
                       <div className="form-field">
                         <label>Subcategoría</label>
-                        <input
-                          name="subcategoria"
-                          value={editForm.subcategoria}
-                          onChange={onEditChange}
-                        />
+                        <input name="subcategoria" value={editForm.subcategoria} onChange={onEditChange} />
                       </div>
 
                       <div className="form-field">
@@ -642,8 +641,22 @@ export default function Modelos() {
                         />
                       </div>
 
+                      {editTipoNorm === "STICKER" && (
+                        <div className="form-field">
+                          <label>Unidades por plancha (stickers)</label>
+                          <input
+                            name="unidadesPorPlancha"
+                            type="number"
+                            min="1"
+                            value={editForm.unidadesPorPlancha}
+                            onChange={onEditChange}
+                            placeholder="Ej: 25"
+                          />
+                        </div>
+                      )}
+
                       <div className="form-field">
-                        <label>Imagen de portada</label>
+                        <label>Imagen</label>
                         <div className="models-upload-inline">
                           <input
                             id={imagenInputId}
@@ -652,24 +665,14 @@ export default function Modelos() {
                             onChange={handleImagenFileChangeEdit}
                             className="upload-input"
                           />
-                          <label
-                            htmlFor={imagenInputId}
-                            className="upload-button upload-button--small"
-                          >
-                            <span className="upload-button-label">
-                              Cambiar imagen
-                            </span>
+                          <label htmlFor={imagenInputId} className="upload-button upload-button--small">
+                            <span className="upload-button-label">Cambiar imagen</span>
                           </label>
                         </div>
-                        {editForm.imagenRef && (
-                          <small className="upload-hint">
-                            Archivo listo ✔
-                          </small>
-                        )}
                       </div>
 
                       <div className="form-field">
-                        <label>Archivo de plancha (PDF)</label>
+                        <label>PDF</label>
                         <div className="models-upload-inline">
                           <input
                             id={planchaInputId}
@@ -678,133 +681,68 @@ export default function Modelos() {
                             onChange={handlePlanchaFileChangeEdit}
                             className="upload-input"
                           />
-                          <label
-                            htmlFor={planchaInputId}
-                            className="upload-button upload-button--small"
-                          >
-                            <span className="upload-button-label">
-                              Cambiar plancha
-                            </span>
+                          <label htmlFor={planchaInputId} className="upload-button upload-button--small">
+                            <span className="upload-button-label">Cambiar PDF</span>
                           </label>
                         </div>
-                        {editForm.archivoPlancha && (
-                          <small className="upload-hint">
-                            PDF listo ✔
-                          </small>
-                        )}
                       </div>
                     </div>
 
                     <div className="model-card__edit-actions">
-                      <button
-                        type="button"
-                        onClick={saveEdit}
-                        className="btn-primary"
-                      >
-                        Guardar
-                      </button>
-                      <button
-                        type="button"
-                        onClick={cancelEdit}
-                        className="btn-secondary"
-                      >
-                        Cancelar
-                      </button>
+                      <button type="button" onClick={saveEdit} className="btn-primary">Guardar</button>
+                      <button type="button" onClick={cancelEdit} className="btn-secondary">Cancelar</button>
                     </div>
                   </div>
                 );
               }
 
+              const imagenUrl = getImagenUrl(m);
+              const planchaUrl = getPlanchaUrl(m);
+
               return (
                 <div key={m.id} className="model-card">
-                  {/* Acciones flotantes (aparecen en hover) */}
                   <div className="model-card__actions">
-                    <button
-                      type="button"
-                      onClick={() => startEdit(m)}
-                      className="icon-btn"
-                      title="Editar modelo"
-                    >
-                      ✏️
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => onDelete(m.id)}
-                      className="icon-btn icon-btn--danger"
-                      title="Eliminar modelo"
-                    >
-                      🗑️
-                    </button>
+                    <button type="button" onClick={() => startEdit(m)} className="icon-btn" title="Editar">✏️</button>
+                    <button type="button" onClick={() => onDelete(m.id)} className="icon-btn icon-btn--danger" title="Eliminar">🗑️</button>
                   </div>
 
-                  {/* Imagen */}
                   <div className="model-card__image-wrapper">
-                    {m.imagenRef ? (
-                      <a
-                        href={m.imagenRef}
-                        target="_blank"
-                        rel="noreferrer"
-                        title="Ver imagen en grande"
-                      >
-                        <img
-                          src={m.imagenRef}
-                          alt={m.nombreModelo}
-                          className="model-card__image"
-                        />
+                    {imagenUrl ? (
+                      <a href={imagenUrl} target="_blank" rel="noreferrer" title="Ver imagen">
+                        <img src={imagenUrl} alt={m.nombreModelo} className="model-card__image" />
                       </a>
                     ) : (
-                      <div className="model-card__image-placeholder">
-                        Sin imagen
-                      </div>
+                      <div className="model-card__image-placeholder">Sin imagen</div>
                     )}
                   </div>
 
-                  {/* Texto centrado */}
                   <div className="model-card__body">
-                    <h3 className="model-card__title">
-                      {m.nombreModelo}
-                    </h3>
+                    <h3 className="model-card__title">{m.nombreModelo}</h3>
 
                     <div className="model-card__tags">
+                      {m.productoBaseTipo && (
+                        <span className="model-card__tag model-card__tag--categoria">{humanTipo(m.productoBaseTipo)}</span>
+                      )}
                       {m.categoria && (
-                        <span className="model-card__tag model-card__tag--categoria">
-                          {m.categoria}
-                        </span>
+                        <span className="model-card__tag model-card__tag--categoria">{m.categoria}</span>
                       )}
                       {m.subcategoria && (
-                        <span className="model-card__tag model-card__tag--subcategoria">
-                          {m.subcategoria}
-                        </span>
+                        <span className="model-card__tag model-card__tag--subcategoria">{m.subcategoria}</span>
+                      )}
+                      {normTipoBase(m.productoBaseTipo) === "STICKER" && Number(m.unidadesPorPlancha || 0) > 0 && (
+                        <span className="model-card__tag">x{m.unidadesPorPlancha}/plancha</span>
                       )}
                     </div>
 
-                    {prod && (
-                      <p className="model-card__product">
-                        Producto base: {prod.nombre}
-                      </p>
-                    )}
-                    {!prod && (
-                      <p className="model-card__product">
-                        Producto: {m.productoId}
-                      </p>
-                    )}
-
                     {stats && (
                       <p className="model-card__stats">
-                        Producciones: {stats.veces} · Unidades:{" "}
-                        {stats.unidades}
+                        Producciones: {stats.veces} · Unidades: {stats.unidades}
                       </p>
                     )}
 
-                    {m.archivoPlancha && (
+                    {planchaUrl && (
                       <p className="model-card__link">
-                        <a
-                          href={m.archivoPlancha}
-                          target="_blank"
-                          rel="noreferrer"
-                        >
-                          Ver / imprimir plancha (PDF)
-                        </a>
+                        <a href={planchaUrl} target="_blank" rel="noreferrer">Ver / imprimir PDF</a>
                       </p>
                     )}
                   </div>

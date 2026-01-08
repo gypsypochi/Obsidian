@@ -85,9 +85,6 @@ export default function Nav() {
             <NavLink to="/productos" className={linkClassName}>
               Productos
             </NavLink>
-            <NavLink to="/recetas" className={linkClassName}>
-              Recetas
-            </NavLink>
           </div>
         </div>
 

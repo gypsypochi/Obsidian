@@ -5,7 +5,6 @@ import Materiales from "./pages/materiales.jsx";
 import Proveedores from "./pages/proveedores.jsx";
 import Productos from "./pages/productos.jsx";
 import Nav from "./components/nav/nav.jsx";
-import Recetas from "./pages/recetas.jsx";
 import Produccion from "./pages/produccion/produccion.jsx"; // 👈 NUEVA RUTA
 import Historial from "./pages/historial.jsx";
 import Pedidos from "./pages/pedidos/pedidos.jsx";
@@ -26,7 +25,6 @@ export default function App() {
           <Route path="/materiales" element={<Materiales />} />
           <Route path="/proveedores" element={<Proveedores />} />
           <Route path="/productos" element={<Productos />} />
-          <Route path="/recetas" element={<Recetas />} />
           <Route path="/produccion" element={<Produccion />} />
           <Route path="/historial" element={<Historial />} />
           <Route path="/ventas" element={<Ventas />} />

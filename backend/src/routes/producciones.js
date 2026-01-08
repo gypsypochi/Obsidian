@@ -5,9 +5,6 @@ const router = express.Router();
 const {
   readProductos,
   writeProductos,
-  readMaterials,
-  writeMaterials,
-  readRecetas,
   readProducciones,
   writeProducciones,
   readHistorialStock,
@@ -16,7 +13,7 @@ const {
   writeModelos,
 } = require("../utils/fileDB");
 
-// GET /producciones - listar historial de producciones
+// GET /producciones
 router.get("/", (req, res) => {
   try {
     const producciones = readProducciones();
@@ -27,180 +24,94 @@ router.get("/", (req, res) => {
   }
 });
 
-// POST /producciones - registrar una producción
+// POST /producciones
+// ✅ ingreso de stock (producción o compra)
+// body:
+// { productoBaseId, tipoMovimiento:"produccion"|"compra", cantidad, modeloId?, detalle? }
 router.post("/", (req, res) => {
   try {
-    const { productoId, cantidad, unidadesBuenas, modeloId } = req.body;
+    const { productoBaseId, tipoMovimiento, cantidad, modeloId, detalle } = req.body;
 
-    if (!productoId) {
-      return res.status(400).json({ error: "productoId es obligatorio" });
+    if (!productoBaseId) {
+      return res.status(400).json({ error: "productoBaseId es obligatorio" });
     }
 
-    if (cantidad === undefined || typeof cantidad !== "number" || cantidad <= 0) {
-      return res
-        .status(400)
-        .json({ error: "cantidad debe ser un número mayor a 0" });
+    const mov = String(tipoMovimiento || "produccion").toLowerCase();
+    if (!["produccion", "compra"].includes(mov)) {
+      return res.status(400).json({ error: "tipoMovimiento inválido (produccion|compra)" });
+    }
+
+    const cant = Number(cantidad);
+    if (Number.isNaN(cant) || cant <= 0) {
+      return res.status(400).json({ error: "cantidad debe ser un número mayor a 0" });
     }
 
     const productos = readProductos();
-    const materiales = readMaterials();
-    const recetas = readRecetas();
-    const modelos = readModelos();
+    const idx = productos.findIndex((p) => p.id === productoBaseId);
 
-    const producto = productos.find((p) => p.id === productoId);
-    if (!producto) {
-      return res.status(404).json({ error: "Producto no encontrado" });
+    if (idx === -1) {
+      return res.status(404).json({ error: "Producto base no encontrado" });
     }
 
-    const controlStock = producto.controlStock || "automatico";
-
-    const recetasProducto = recetas.filter((r) => r.productoId === productoId);
-    if (recetasProducto.length === 0) {
-      return res
-        .status(400)
-        .json({ error: "El producto no tiene receta asociada" });
+    const prod = productos[idx];
+    if (prod.esBase !== true) {
+      return res.status(400).json({ error: "El producto seleccionado no es un producto base" });
     }
 
-    const tipoProduccion = recetasProducto[0].tipoProduccion || "unidad";
-
-    let unidadesBuenasNum = undefined;
-    if (tipoProduccion === "lote") {
-      if (unidadesBuenas === undefined) {
-        return res.status(400).json({
-          error:
-            "Para productos de tipo 'lote' tenés que indicar cuántas unidades buenas vas a sumar (unidadesBuenas)",
-        });
-      }
-      unidadesBuenasNum = Number(unidadesBuenas);
-      if (Number.isNaN(unidadesBuenasNum) || unidadesBuenasNum <= 0) {
-        return res.status(400).json({
-          error:
-            "unidadesBuenas debe ser un número mayor a 0 para productos de tipo 'lote'",
-        });
-      }
-    }
-
-    // Calculamos requerimientos de materiales
-    const requerimientos = recetasProducto.map((r) => {
-      const material = materiales.find((m) => m.id === r.materialId);
-
-      if (!material) {
-        throw new Error(
-          `Material de receta no encontrado (materialId: ${r.materialId})`
-        );
-      }
-
-      const factor = cantidad;
-      const cantidadNecesaria = (r.cantidad || 0) * factor;
-
-      return {
-        materialId: material.id,
-        nombreMaterial: material.nombre,
-        requerido: cantidadNecesaria,
-        stockActual: material.stock || 0,
-      };
-    });
-
-    const faltantes = requerimientos.filter(
-      (req) => req.requerido > req.stockActual
-    );
-
-    if (faltantes.length > 0) {
-      return res.status(400).json({
-        error: "Stock insuficiente para producir la cantidad indicada",
-        detalles: faltantes.map((f) => ({
-          materialId: f.materialId,
-          nombreMaterial: f.nombreMaterial,
-          requerido: f.requerido,
-          stockActual: f.stockActual,
-        })),
-      });
-    }
-
-    // Descontar materiales SIEMPRE
-    for (const reqMat of requerimientos) {
-      const idx = materiales.findIndex((m) => m.id === reqMat.materialId);
-      if (idx !== -1) {
-        materiales[idx].stock =
-          (materiales[idx].stock || 0) - reqMat.requerido;
-      }
-    }
-
-    const productoIndex = productos.findIndex((p) => p.id === productoId);
-
-    let incrementoStock;
-    if (tipoProduccion === "lote") {
-      incrementoStock = unidadesBuenasNum;
-    } else {
-      incrementoStock = cantidad;
-    }
-
-    const stockAntes = productos[productoIndex].stock || 0;
-    let stockDespues = stockAntes;
-
-    if (controlStock === "automatico") {
-      stockDespues = stockAntes + incrementoStock;
-      productos[productoIndex].stock = stockDespues;
-    }
-
-    // Guardar materiales y productos
-    writeMaterials(materiales);
+    // sumar stock producto base
+    const stockAntes = Number(prod.stock || 0);
+    const stockDespues = stockAntes + cant;
+    productos[idx].stock = stockDespues;
     writeProductos(productos);
 
-    // 🔹 NUEVO: actualizar stockModelo si corresponde
-    if (controlStock === "automatico" && modeloId) {
-      const modelosLista = Array.isArray(modelos) ? [...modelos] : [];
-      const idxModelo = modelosLista.findIndex((m) => m.id === modeloId);
+    // sumar stock al modelo SOLO si viene modeloId (y existe)
+    if (modeloId) {
+      const modelos = readModelos();
+      const idxModelo = modelos.findIndex((m) => m.id === modeloId);
       if (idxModelo !== -1) {
-        const actual = Number(modelosLista[idxModelo].stockModelo || 0);
-        modelosLista[idxModelo].stockModelo = actual + incrementoStock;
-        writeModelos(modelosLista);
+        const actual = Number(modelos[idxModelo].stockModelo || 0);
+        modelos[idxModelo].stockModelo = actual + cant;
+        writeModelos(modelos);
       }
     }
 
     const producciones = readProducciones();
-    const nuevaProduccion = {
-      id: `prodop-${Date.now()}`,
-      productoId,
+    const nueva = {
+      id: `mov-${Date.now()}`,
+      tipoMovimiento: mov, // "produccion" | "compra"
+      productoBaseId,
       modeloId: modeloId || null,
-      cantidad,
-      tipoProduccion,
-      unidadesBuenas: tipoProduccion === "lote" ? incrementoStock : null,
-      incrementoStock,
+      cantidad: cant,
+      incrementoStock: cant,
+      detalle: String(detalle || "").trim(), // ✅ para “7 Mafalda + 7 Ghibli”
       fecha: new Date().toISOString(),
-      materialesUsados: requerimientos.map((r) => ({
-        materialId: r.materialId,
-        cantidad: r.requerido,
-      })),
     };
 
-    producciones.push(nuevaProduccion);
+    producciones.push(nueva);
     writeProducciones(producciones);
 
-    if (controlStock === "automatico") {
-      const historial = readHistorialStock();
-      const nuevoMovimiento = {
-        id: `mov-${Date.now()}`,
-        productoId,
-        tipoMovimiento: "produccion",
-        cantidad: incrementoStock,
-        stockAntes,
-        stockDespues,
-        produccionId: nuevaProduccion.id,
-        fecha: nuevaProduccion.fecha,
-        modeloId: modeloId || null,
-      };
-      historial.push(nuevoMovimiento);
-      writeHistorialStock(historial);
-    }
+    const historial = readHistorialStock();
+    historial.push({
+      id: `hist-${Date.now()}`,
+      productoId: productoBaseId,
+      tipoMovimiento: mov,
+      cantidad: cant,
+      stockAntes,
+      stockDespues,
+      produccionId: nueva.id,
+      fecha: nueva.fecha,
+      modeloId: modeloId || null,
+      detalle: nueva.detalle,
+    });
+    writeHistorialStock(historial);
 
     res.status(201).json({
-      produccion: nuevaProduccion,
-      productoActualizado: productos[productoIndex],
+      movimiento: nueva,
+      productoBaseActualizado: productos[idx],
     });
   } catch (err) {
-    console.error("Error registrando producción:", err);
-    res.status(500).json({ error: "Error interno registrando producción" });
+    console.error("Error registrando ingreso:", err);
+    res.status(500).json({ error: "Error interno registrando ingreso" });
   }
 });
 

@@ -6,7 +6,6 @@ const path = require("path");
 const materialesRoutes = require("./routes/materiales");
 const proveedoresRoutes = require("./routes/proveedores");
 const productosRoutes = require("./routes/productos");
-const recetasRoutes = require("./routes/recetas");
 const produccionesRoutes = require("./routes/producciones");
 const historialRoutes = require("./routes/historial");
 const ventasRoutes = require("./routes/ventas");
@@ -42,7 +41,6 @@ app.get("/health", (req, res) => {
 app.use("/materiales", materialesRoutes);
 app.use("/proveedores", proveedoresRoutes);
 app.use("/productos", productosRoutes);
-app.use("/recetas", recetasRoutes);
 app.use("/producciones", produccionesRoutes);
 app.use("/historial", historialRoutes);
 app.use("/ventas", ventasRoutes);

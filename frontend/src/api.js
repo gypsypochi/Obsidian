@@ -1,5 +1,32 @@
 const API_URL = "http://localhost:3001";
 
+/* =========================
+   Helpers
+   ========================= */
+async function parseJsonSafe(res) {
+  const text = await res.text();
+  if (!text) return null;
+  try {
+    return JSON.parse(text);
+  } catch {
+    return text; // fallback
+  }
+}
+
+function buildQuery(params = {}) {
+  const sp = new URLSearchParams();
+  Object.entries(params).forEach(([k, v]) => {
+    if (v === undefined || v === null) return;
+    if (typeof v === "string" && v.trim() === "") return;
+    sp.set(k, String(v));
+  });
+  const qs = sp.toString();
+  return qs ? `?${qs}` : "";
+}
+
+/* =========================
+   Materiales
+   ========================= */
 export async function getMateriales() {
   const res = await fetch(`${API_URL}/materiales`);
   if (!res.ok) throw new Error("Error al cargar materiales");
@@ -13,7 +40,7 @@ export async function createMaterial(material) {
     body: JSON.stringify(material),
   });
 
-  const data = await res.json();
+  const data = await res.json().catch(() => null);
   if (!res.ok) throw new Error(data?.error || "Error al crear material");
   return data;
 }
@@ -25,7 +52,7 @@ export async function updateMaterial(id, updates) {
     body: JSON.stringify(updates),
   });
 
-  const data = await res.json();
+  const data = await res.json().catch(() => null);
   if (!res.ok) throw new Error(data?.error || "Error al actualizar material");
   return data;
 }
@@ -35,11 +62,14 @@ export async function deleteMaterial(id) {
     method: "DELETE",
   });
 
-  const data = await res.json();
+  const data = await res.json().catch(() => null);
   if (!res.ok) throw new Error(data?.error || "Error al eliminar material");
   return data;
 }
 
+/* =========================
+   Proveedores
+   ========================= */
 export async function getProveedores() {
   const res = await fetch(`${API_URL}/proveedores`);
   if (!res.ok) throw new Error("Error al cargar proveedores");
@@ -53,7 +83,7 @@ export async function createProveedor(proveedor) {
     body: JSON.stringify(proveedor),
   });
 
-  const data = await res.json();
+  const data = await res.json().catch(() => null);
   if (!res.ok) throw new Error(data?.error || "Error al crear proveedor");
   return data;
 }
@@ -65,7 +95,7 @@ export async function updateProveedor(id, updates) {
     body: JSON.stringify(updates),
   });
 
-  const data = await res.json();
+  const data = await res.json().catch(() => null);
   if (!res.ok) throw new Error(data?.error || "Error al actualizar proveedor");
   return data;
 }
@@ -75,14 +105,23 @@ export async function deleteProveedor(id) {
     method: "DELETE",
   });
 
-  const data = await res.json();
+  const data = await res.json().catch(() => null);
   if (!res.ok) throw new Error(data?.error || "Error al eliminar proveedor");
   return data;
 }
 
+/* =========================
+   Productos
+   ========================= */
 export async function getProductos() {
   const res = await fetch(`${API_URL}/productos`);
   if (!res.ok) throw new Error("Error al cargar productos");
+  return res.json();
+}
+
+export async function getProductosBase() {
+  const res = await fetch(`${API_URL}/productos?base=1`);
+  if (!res.ok) throw new Error("Error al cargar productos base");
   return res.json();
 }
 
@@ -93,7 +132,7 @@ export async function createProducto(producto) {
     body: JSON.stringify(producto),
   });
 
-  const data = await res.json();
+  const data = await res.json().catch(() => null);
   if (!res.ok) throw new Error(data?.error || "Error al crear producto");
   return data;
 }
@@ -105,7 +144,7 @@ export async function updateProducto(id, updates) {
     body: JSON.stringify(updates),
   });
 
-  const data = await res.json();
+  const data = await res.json().catch(() => null);
   if (!res.ok) throw new Error(data?.error || "Error al actualizar producto");
   return data;
 }
@@ -115,51 +154,14 @@ export async function deleteProducto(id) {
     method: "DELETE",
   });
 
-  const data = await res.json();
+  const data = await res.json().catch(() => null);
   if (!res.ok) throw new Error(data?.error || "Error al eliminar producto");
   return data;
 }
 
-export async function getRecetas() {
-  const res = await fetch(`${API_URL}/recetas`);
-  if (!res.ok) throw new Error("Error al cargar recetas");
-  return res.json();
-}
-
-export async function createReceta(receta) {
-  const res = await fetch(`${API_URL}/recetas`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(receta),
-  });
-
-  const data = await res.json();
-  if (!res.ok) throw new Error(data?.error || "Error al crear receta");
-  return data;
-}
-
-export async function updateReceta(id, updates) {
-  const res = await fetch(`${API_URL}/recetas/${id}`, {
-    method: "PUT",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(updates),
-  });
-
-  const data = await res.json();
-  if (!res.ok) throw new Error(data?.error || "Error al actualizar receta");
-  return data;
-}
-
-export async function deleteReceta(id) {
-  const res = await fetch(`${API_URL}/recetas/${id}`, {
-    method: "DELETE",
-  });
-
-  const data = await res.json();
-  if (!res.ok) throw new Error(data?.error || "Error al eliminar receta");
-  return data;
-}
-
+/* =========================
+   Producciones
+   ========================= */
 export async function createProduccion(produccion) {
   const res = await fetch(`${API_URL}/producciones`, {
     method: "POST",
@@ -167,46 +169,35 @@ export async function createProduccion(produccion) {
     body: JSON.stringify(produccion),
   });
 
-  const text = await res.text();
-  let data = null;
-
-  // Intentamos parsear JSON si se puede
-  try {
-    data = text ? JSON.parse(text) : null;
-  } catch {
-    // si no es JSON, lo dejamos como texto
-  }
+  const data = await parseJsonSafe(res);
 
   if (!res.ok) {
-    if (data && data.error) {
-      throw new Error(data.error);
-    }
-    if (text) {
-      throw new Error(text);
-    }
+    if (data && typeof data === "object" && data.error) throw new Error(data.error);
+    if (typeof data === "string" && data) throw new Error(data);
     throw new Error("Error al registrar producción");
   }
 
   return data;
 }
 
-// 🔹 AGREGAR ESTO:
 export async function getProducciones() {
   const res = await fetch(`${API_URL}/producciones`);
-
-  if (!res.ok) {
-    throw new Error("Error al cargar producciones");
-  }
-
+  if (!res.ok) throw new Error("Error al cargar producciones");
   return res.json();
 }
 
+/* =========================
+   Historial
+   ========================= */
 export async function getHistorialStock() {
   const res = await fetch(`${API_URL}/historial`);
   if (!res.ok) throw new Error("Error al cargar historial de stock");
   return res.json();
 }
 
+/* =========================
+   Ventas
+   ========================= */
 export async function getVentas() {
   const res = await fetch(`${API_URL}/ventas`);
   if (!res.ok) throw new Error("Error al cargar ventas");
@@ -223,15 +214,16 @@ export async function createVenta(venta) {
   const data = await res.json().catch(() => null);
 
   if (!res.ok) {
-    if (data && data.error) {
-      throw new Error(data.error);
-    }
+    if (data && data.error) throw new Error(data.error);
     throw new Error("Error al registrar venta");
   }
 
   return data;
 }
 
+/* =========================
+   Pedidos
+   ========================= */
 export async function getPedidos() {
   const res = await fetch(`${API_URL}/pedidos`);
   if (!res.ok) throw new Error("Error al cargar pedidos");
@@ -272,9 +264,13 @@ export async function updatePedido(id, updates) {
   return data;
 }
 
-// --- MODELOS / DISEÑOS (NUEVO) ---
-export async function getModelos() {
-  const res = await fetch(`${API_URL}/modelos`);
+/* =========================
+   Modelos / Diseños
+   ========================= */
+export async function getModelos(params = {}) {
+  // soporta filtros si el backend los ignora, no pasa nada
+  const qs = buildQuery(params);
+  const res = await fetch(`${API_URL}/modelos${qs}`);
   if (!res.ok) throw new Error("Error al cargar modelos");
   return res.json();
 }
@@ -328,8 +324,9 @@ export async function deleteModelo(id) {
   return data;
 }
 
-// ...
-
+/* =========================
+   Uploads
+   ========================= */
 export async function uploadImagen(file) {
   const formData = new FormData();
   formData.append("file", file);
@@ -368,7 +365,9 @@ export async function uploadPlancha(file) {
   return data; // { url }
 }
 
-// --- FERIAS ---
+/* =========================
+   Ferias
+   ========================= */
 export async function getFerias() {
   const res = await fetch(`${API_URL}/ferias`);
   if (!res.ok) throw new Error("Error al cargar ferias");
@@ -418,7 +417,9 @@ export async function deleteFeria(id) {
   return data;
 }
 
-// --- GASTOS (NUEVO) ---
+/* =========================
+   Gastos
+   ========================= */
 export async function getGastos() {
   const res = await fetch(`${API_URL}/gastos`);
   if (!res.ok) throw new Error("Error al cargar gastos");
