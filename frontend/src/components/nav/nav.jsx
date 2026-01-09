@@ -55,7 +55,7 @@ export default function Nav() {
 
         <div className="sidebar-title">
           <span className="sidebar-title-name">OBSIDIAN</span>
-          <span className="sidebar-title-version">Ver 1.0</span>
+          <span className="sidebar-title-version">Ver 2.0</span>
         </div>
       </div>
 
