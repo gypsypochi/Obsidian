@@ -23,11 +23,15 @@ const uploadRoutes = require("./routes/upload");
 // NUEVO: gastos
 const gastosRoutes = require("./routes/gastos");
 
+// ✅ NUEVO: admin
+const adminRoutes = require("./routes/admin");
+
 const app = express();
 const PORT = process.env.PORT || 3001;
 
 app.use(cors());
-app.use(express.json());
+// ✅ subimos el límite para poder restaurar backups grandes
+app.use(express.json({ limit: "20mb" }));
 
 // Servir archivos estáticos subidos (imagenes / pdf)
 app.use("/uploads", express.static(path.join(__dirname, "../uploads")));
@@ -57,6 +61,9 @@ app.use("/upload", uploadRoutes);
 
 // NUEVO: gastos
 app.use("/gastos", gastosRoutes);
+
+// ✅ NUEVO: admin
+app.use("/admin", adminRoutes);
 
 // =========================
 // Servir FRONTEND (build Vite)

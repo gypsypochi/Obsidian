@@ -5,7 +5,7 @@ import Materiales from "./pages/materiales.jsx";
 import Proveedores from "./pages/proveedores.jsx";
 import Productos from "./pages/productos.jsx";
 import Nav from "./components/nav/nav.jsx";
-import Produccion from "./pages/produccion/produccion.jsx"; // 👈 NUEVA RUTA
+import Produccion from "./pages/produccion/produccion.jsx";
 import Historial from "./pages/historial.jsx";
 import Pedidos from "./pages/pedidos/pedidos.jsx";
 import Ventas from "./pages/ventas/ventas.jsx";
@@ -13,6 +13,9 @@ import Modelos from "./pages/modelos.jsx";
 import Ferias from "./pages/ferias.jsx";
 import Gastos from "./pages/gastos/gastos.jsx";
 import Balance from "./pages/balance/balance.jsx";
+
+// ✅ NUEVO
+import Admin from "./pages/admin.jsx";
 
 export default function App() {
   return (
@@ -33,6 +36,10 @@ export default function App() {
           <Route path="/ferias" element={<Ferias />} />
           <Route path="/gastos" element={<Gastos />} />
           <Route path="/balance" element={<Balance />} />
+
+          {/* ✅ NUEVO */}
+          <Route path="/admin" element={<Admin />} />
+
           <Route path="*" element={<p>404 – Página no encontrada</p>} />
         </Routes>
       </main>

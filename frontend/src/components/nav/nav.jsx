@@ -1,7 +1,6 @@
 // frontend/src/components/nav/nav.jsx
 import { NavLink } from "react-router-dom";
 import { useEffect, useState } from "react";
-// ⬇️ Ajustamos la ruta porque ahora estamos en /components/nav/
 import { getPedidos } from "../../api";
 import "./nav.css";
 
@@ -63,19 +62,12 @@ export default function Nav() {
       <nav className="sidebar-nav">
         {/* ================= BASE ================= */}
         <div className="sidebar-section">
-          <button
-            className="sidebar-section-toggle"
-            onClick={() => toggle("base")}
-          >
+          <button className="sidebar-section-toggle" onClick={() => toggle("base")}>
             <span>Base</span>
             <span className={`caret ${open.base ? "open" : ""}`}>▸</span>
           </button>
 
-          <div
-            className={`sidebar-section-content ${
-              open.base ? "open" : ""
-            }`}
-          >
+          <div className={`sidebar-section-content ${open.base ? "open" : ""}`}>
             <NavLink to="/materiales" className={linkClassName}>
               Materiales
             </NavLink>
@@ -98,11 +90,7 @@ export default function Nav() {
             <span className={`caret ${open.operativa ? "open" : ""}`}>▸</span>
           </button>
 
-          <div
-            className={`sidebar-section-content ${
-              open.operativa ? "open" : ""
-            }`}
-          >
+          <div className={`sidebar-section-content ${open.operativa ? "open" : ""}`}>
             <NavLink to="/produccion" className={linkClassName}>
               Producción
             </NavLink>
@@ -126,24 +114,22 @@ export default function Nav() {
 
         {/* ================= FINANZAS ================= */}
         <div className="sidebar-section">
-          <button
-            className="sidebar-section-toggle"
-            onClick={() => toggle("finanzas")}
-          >
+          <button className="sidebar-section-toggle" onClick={() => toggle("finanzas")}>
             <span>Finanzas</span>
             <span className={`caret ${open.finanzas ? "open" : ""}`}>▸</span>
           </button>
 
-          <div
-            className={`sidebar-section-content ${
-              open.finanzas ? "open" : ""
-            }`}
-          >
+          <div className={`sidebar-section-content ${open.finanzas ? "open" : ""}`}>
             <NavLink to="/gastos" className={linkClassName}>
               Gastos
             </NavLink>
             <NavLink to="/balance" className={linkClassName}>
               Balance / Dashboard
+            </NavLink>
+
+            {/* ✅ NUEVO */}
+            <NavLink to="/admin" className={linkClassName}>
+              Admin
             </NavLink>
           </div>
         </div>
