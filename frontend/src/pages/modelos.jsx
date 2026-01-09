@@ -41,6 +41,15 @@ const TIPOS_FALLBACK = [
   "OTRO",
 ];
 
+function cmpText(a, b) {
+  return String(a || "").localeCompare(String(b || ""), "es", { sensitivity: "base" });
+}
+
+function dateMs(v) {
+  const t = Date.parse(v);
+  return Number.isNaN(t) ? 0 : t;
+}
+
 export default function Modelos() {
   const [modelos, setModelos] = useState([]);
   const [producciones, setProducciones] = useState([]);
@@ -79,6 +88,9 @@ export default function Modelos() {
   const [fSubcategoria, setFSubcategoria] = useState("");
   const [fTexto, setFTexto] = useState("");
 
+  // Orden
+  const [orden, setOrden] = useState("fecha_desc");
+
   async function load() {
     try {
       setError("");
@@ -112,14 +124,8 @@ export default function Modelos() {
     return Array.from(set).sort();
   }, [productosBase]);
 
-  const formTipoNorm = useMemo(
-    () => normTipoBase(form.productoBaseTipo),
-    [form.productoBaseTipo]
-  );
-  const editTipoNorm = useMemo(
-    () => normTipoBase(editForm.productoBaseTipo),
-    [editForm.productoBaseTipo]
-  );
+  const formTipoNorm = useMemo(() => normTipoBase(form.productoBaseTipo), [form.productoBaseTipo]);
+  const editTipoNorm = useMemo(() => normTipoBase(editForm.productoBaseTipo), [editForm.productoBaseTipo]);
 
   function onFormChange(e) {
     const { name, value } = e.target;
@@ -193,7 +199,7 @@ export default function Modelos() {
     }
 
     const payload = {
-      productoBaseTipo: tipo, // ✅ normalizado
+      productoBaseTipo: tipo,
       categoria: form.categoria,
       subcategoria: form.subcategoria,
       nombreModelo: form.nombreModelo,
@@ -326,7 +332,7 @@ export default function Modelos() {
     }
 
     const payload = {
-      productoBaseTipo: tipo, // ✅ normalizado
+      productoBaseTipo: tipo,
       categoria: editForm.categoria,
       subcategoria: editForm.subcategoria,
       nombreModelo: editForm.nombreModelo,
@@ -377,9 +383,7 @@ export default function Modelos() {
       const actual = map.get(p.modeloId) || { veces: 0, unidades: 0 };
       actual.veces += 1;
 
-      // ✅ robusto con distintos campos y ceros
-      const inc =
-        (p.incrementoStock ?? p.unidadesBuenas ?? p.cantidad ?? 0);
+      const inc = p.incrementoStock ?? p.unidadesBuenas ?? p.cantidad ?? 0;
       actual.unidades += Number(inc || 0);
 
       map.set(p.modeloId, actual);
@@ -388,32 +392,36 @@ export default function Modelos() {
     return map;
   }, [producciones]);
 
-  const opcionesCategoria = useMemo(
-    () => Array.from(new Set(modelos.map((m) => m.categoria).filter(Boolean))).sort(),
-    [modelos]
-  );
+  // ✅ opciones sugeridas (las que YA existen)
+  const opcionesCategoria = useMemo(() => {
+    return Array.from(
+      new Set(
+        (modelos || [])
+          .map((m) => String(m.categoria || "").trim())
+          .filter(Boolean)
+      )
+    ).sort(cmpText);
+  }, [modelos]);
 
-  const opcionesSubcategoria = useMemo(
-    () => Array.from(new Set(modelos.map((m) => m.subcategoria).filter(Boolean))).sort(),
-    [modelos]
-  );
+  const opcionesSubcategoria = useMemo(() => {
+    return Array.from(
+      new Set(
+        (modelos || [])
+          .map((m) => String(m.subcategoria || "").trim())
+          .filter(Boolean)
+      )
+    ).sort(cmpText);
+  }, [modelos]);
 
   const modelosFiltrados = useMemo(() => {
-    return modelos.filter((m) => {
-      if (
-        fProductoBaseTipo &&
-        normTipoBase(m.productoBaseTipo) !== normTipoBase(fProductoBaseTipo)
-      ) return false;
+    let datos = (modelos || []).filter((m) => {
+      if (fProductoBaseTipo && normTipoBase(m.productoBaseTipo) !== normTipoBase(fProductoBaseTipo)) return false;
 
-      if (
-        fCategoria.trim() &&
-        !String(m.categoria || "").toLowerCase().includes(fCategoria.trim().toLowerCase())
-      ) return false;
+      if (fCategoria.trim() && !String(m.categoria || "").toLowerCase().includes(fCategoria.trim().toLowerCase()))
+        return false;
 
-      if (
-        fSubcategoria.trim() &&
-        !String(m.subcategoria || "").toLowerCase().includes(fSubcategoria.trim().toLowerCase())
-      ) return false;
+      if (fSubcategoria.trim() && !String(m.subcategoria || "").toLowerCase().includes(fSubcategoria.trim().toLowerCase()))
+        return false;
 
       if (fTexto.trim()) {
         const term = fTexto.trim().toLowerCase();
@@ -423,13 +431,43 @@ export default function Modelos() {
 
       return true;
     });
-  }, [modelos, fProductoBaseTipo, fCategoria, fSubcategoria, fTexto]);
+
+    const getCreated = (m) => dateMs(m.fechaCreacion || m.createdAt || m.fecha || "");
+    const getUpdated = (m) => dateMs(m.updatedAt || m.fechaActualizacion || "");
+
+    datos = [...datos].sort((a, b) => {
+      if (orden === "nombre_asc") {
+        const c = cmpText(a.nombreModelo, b.nombreModelo);
+        if (c !== 0) return c;
+        return getCreated(b) - getCreated(a);
+      }
+      if (orden === "nombre_desc") {
+        const c = cmpText(b.nombreModelo, a.nombreModelo);
+        if (c !== 0) return c;
+        return getCreated(b) - getCreated(a);
+      }
+      if (orden === "fecha_asc") {
+        const c = getCreated(a) - getCreated(b);
+        if (c !== 0) return c;
+        return cmpText(a.nombreModelo, b.nombreModelo);
+      }
+      if (orden === "updated_desc") {
+        const c = getUpdated(b) - getUpdated(a);
+        if (c !== 0) return c;
+        return cmpText(a.nombreModelo, b.nombreModelo);
+      }
+
+      const c = getCreated(b) - getCreated(a);
+      if (c !== 0) return c;
+      return cmpText(a.nombreModelo, b.nombreModelo);
+    });
+
+    return datos;
+  }, [modelos, fProductoBaseTipo, fCategoria, fSubcategoria, fTexto, orden]);
 
   function getPlanchaUrl(m) {
     if (Array.isArray(m.archivos) && m.archivos.length > 0) {
-      const pdf =
-        m.archivos.find((a) => (a.tipo || "").toLowerCase() === "pdf") ||
-        m.archivos[0];
+      const pdf = m.archivos.find((a) => (a.tipo || "").toLowerCase() === "pdf") || m.archivos[0];
       return pdf?.url || "";
     }
     return m.archivoPlancha || "";
@@ -442,7 +480,7 @@ export default function Modelos() {
   return (
     <LayoutModels
       title="Modelos / Diseños"
-      description="Modelos por TIPO general (CUADERNO/STICKER/IMÁN...). Para STICKER podés definir unidades por plancha."
+      description='Modelos por TIPO general (CUADERNO/STICKER/IMÁN...). Para STICKER podés definir "unidades por plancha".'
     >
       <div className="models-page">
         <div className="models-status">
@@ -450,6 +488,19 @@ export default function Modelos() {
           {error && <p className="models-message models-message--error">{error}</p>}
           {mensaje && <p className="models-message models-message--success">{mensaje}</p>}
         </div>
+
+        {/* ✅ LISTAS DE SUGERENCIAS (sirven para ALTA y EDICIÓN) */}
+        <datalist id="modelosCategorias">
+          {opcionesCategoria.map((cat) => (
+            <option key={cat} value={cat} />
+          ))}
+        </datalist>
+
+        <datalist id="modelosSubcategorias">
+          {opcionesSubcategoria.map((sub) => (
+            <option key={sub} value={sub} />
+          ))}
+        </datalist>
 
         {/* ALTA */}
         <section className="models-section">
@@ -478,6 +529,7 @@ export default function Modelos() {
                     </select>
                   </div>
 
+                  {/* ✅ Categoría con sugerencias, pero editable libre */}
                   <div className="form-field">
                     <label>Categoría</label>
                     <input
@@ -485,9 +537,11 @@ export default function Modelos() {
                       value={form.categoria}
                       onChange={onFormChange}
                       placeholder="Ej: Anime, Películas, Memes"
+                      list="modelosCategorias"
                     />
                   </div>
 
+                  {/* ✅ Subcategoría con sugerencias, pero editable libre */}
                   <div className="form-field">
                     <label>Subcategoría</label>
                     <input
@@ -495,6 +549,7 @@ export default function Modelos() {
                       value={form.subcategoria}
                       onChange={onFormChange}
                       placeholder="Ej: Harry Potter, Memes argentinos"
+                      list="modelosSubcategorias"
                     />
                   </div>
 
@@ -618,6 +673,17 @@ export default function Modelos() {
               <input value={fTexto} onChange={(e) => setFTexto(e.target.value)} placeholder="Nombre..." />
             </div>
 
+            <div className="form-field">
+              <label>Orden</label>
+              <select value={orden} onChange={(e) => setOrden(e.target.value)}>
+                <option value="fecha_desc">Más nuevos primero</option>
+                <option value="fecha_asc">Más viejos primero</option>
+                <option value="nombre_asc">Nombre A → Z</option>
+                <option value="nombre_desc">Nombre Z → A</option>
+                <option value="updated_desc">Última edición</option>
+              </select>
+            </div>
+
             <div className="models-filters-clear">
               <button type="button" onClick={handleClearFilters} className="btn-secondary">
                 Limpiar filtros
@@ -656,14 +722,25 @@ export default function Modelos() {
                         </select>
                       </div>
 
+                      {/* ✅ sugeridas en edición */}
                       <div className="form-field">
                         <label>Categoría</label>
-                        <input name="categoria" value={editForm.categoria} onChange={onEditChange} />
+                        <input
+                          name="categoria"
+                          value={editForm.categoria}
+                          onChange={onEditChange}
+                          list="modelosCategorias"
+                        />
                       </div>
 
                       <div className="form-field">
                         <label>Subcategoría</label>
-                        <input name="subcategoria" value={editForm.subcategoria} onChange={onEditChange} />
+                        <input
+                          name="subcategoria"
+                          value={editForm.subcategoria}
+                          onChange={onEditChange}
+                          list="modelosSubcategorias"
+                        />
                       </div>
 
                       <div className="form-field">
